@@ -1,0 +1,26 @@
+{
+	"name": "webovac/generator",
+	"type": "library",
+	"description": "Library that helps adding features to Webovac CMS.",
+	"keywords": ["webovac", "nette", "nextras", "cms", "library"],
+	"homepage": "https://github.com/webovac/generator",
+	"license": "MIT",
+	"authors": [
+		{
+			"name": "Štěpán Postler",
+			"email": "stepan.postler@gmail.com"
+		}
+	],
+	"support": {
+		"issues": "https://github.com/webovac/generator/issues"
+	},
+	"require": {
+		"php": ">=8.1",
+		"stepapo/generator": "^0.1"
+	},
+	"autoload": {
+		"psr-4": {
+			"Webovac\\Generator\\": "src/"
+		}
+	}
+}

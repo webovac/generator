@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
+use DateTimeInterface;
 use Nette\DI\Attributes\Inject;
 use Nette\InvalidArgumentException;
 use Nette\PhpGenerator\Attribute;
@@ -47,8 +48,8 @@ class CmsModelGenerator extends ModelGenerator
 		parent::__construct($name, $appNamespace, $module, $withConventions);
 		$this->lname = lcfirst($this->name);
 		$this->uname = StringHelper::underscore($name);
-		$this->modelNamespace = "$appNamespace\Model\\{$this->name}";
-		$this->namespace = $this->moduleNamespace . ($this->module ? "\\{$this->module}" : '') . "\Model\\{$this->name}";
+		$this->modelNamespace = "$appNamespace\Model\\$this->name";
+		$this->namespace = $this->moduleNamespace . ($this->module ? "\\$this->module" : '') . "\Model\\$this->name";
 	}
 
 
@@ -58,7 +59,7 @@ class CmsModelGenerator extends ModelGenerator
 			->setPublic()
 			->setReturnType('string')
 			->setBody("return {$this->name}Data::class;");
-		$class = (new ClassType("{$this->name}"))
+		$class = (new ClassType("$this->name"))
 			->setExtends(CmsEntity::class)
 			->addMember($getDataClassMethod)
 			->addComment("@method {$this->name}Data getData()");
@@ -67,7 +68,7 @@ class CmsModelGenerator extends ModelGenerator
 			->addUse("$this->modelNamespace\\{$this->name}Data")
 			->add($class);
 		if ($this->module) {
-			$trait = "$this->namespace\\$this->module{$this->name}";
+			$trait = "$this->namespace\\$this->module$this->name";
 			$class->addTrait($trait);
 			$namespace->addUse($trait);
 		} else {
@@ -92,11 +93,11 @@ class CmsModelGenerator extends ModelGenerator
 	}
 
 
-	public function generateUpdatedEntity(string $path, array $implements = [])
+	public function generateUpdatedEntity(string $path, array $implements = []): PhpFile
 	{
 		return $this->modifyFileWithTrait(
 			$path,
-			"$this->namespace\\$this->module{$this->name}",
+			"$this->namespace\\$this->module$this->name",
 			fn() => $this->generateCmsEntity($implements),
 		);
 	}
@@ -104,7 +105,7 @@ class CmsModelGenerator extends ModelGenerator
 
 	public function generateEntityTrait(): PhpFile
 	{
-		$trait = (new TraitType("$this->module{$this->name}"))
+		$trait = (new TraitType("$this->module$this->name"))
 			->addComment("@property int \$id {primary}")
 			->addComment("@property DateTimeImmutable \$createdAt {default now}")
 			->addComment("@property DateTimeImmutable|null \$updatedAt")
@@ -131,7 +132,7 @@ class CmsModelGenerator extends ModelGenerator
 		$getTableNameMethod = (new Method('getTableName'))
 			->setPublic()
 			->setReturnType('string')
-			->setBody("return '{$this->uname}';");
+			->setBody("return '$this->uname';");
 
 		$class = (new ClassType("{$this->name}Mapper"))
 			->setExtends(CmsMapper::class)
@@ -202,7 +203,7 @@ EOT
 			->setPublic()
 			->setStatic()
 			->setReturnType('array')
-			->setBody("return [{$this->name}::class];");
+			->setBody("return [$this->name::class];");
 
 		$class = (new ClassType("{$this->name}Repository"))
 			->setExtends(CmsRepository::class)
@@ -229,7 +230,7 @@ EOT
 		if ($this->module) {
 			$trait = "$this->namespace\\$this->module{$this->name}Repository";
 			$class->addTrait($trait);
-			$namespace->addUse($trait);;
+			$namespace->addUse($trait);
 		}
 
 		$file = (new PhpFile())->setStrictTypes();
@@ -279,8 +280,8 @@ EOT
 				(new Property('id'))->setPublic()->setType('int')->setNullable()->setValue(null),
 				(new Property('createdByPerson'))->setPublic()->setType('int|string')->setNullable()->setValue(null),
 				(new Property('updatedByPerson'))->setPublic()->setType('int|string')->setNullable()->setValue(null),
-				(new Property('createdAt'))->setPublic()->setType(\DateTimeInterface::class)->setNullable()->setValue(null),
-				(new Property('updatedAt'))->setPublic()->setType(\DateTimeInterface::class)->setNullable()->setValue(null),
+				(new Property('createdAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable()->setValue(null),
+				(new Property('updatedAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable()->setValue(null),
 			]);
 		}
 		$file = (new PhpFile())->setStrictTypes();
@@ -306,8 +307,8 @@ EOT
 				(new Property('id'))->setPublic()->setType('int')->setNullable()->setValue(null),
 				(new Property('createdByPerson'))->setPublic()->setType('int|string')->setNullable()->setValue(null),
 				(new Property('updatedByPerson'))->setPublic()->setType('int|string')->setNullable()->setValue(null),
-				(new Property('createdAt'))->setPublic()->setType(\DateTimeInterface::class)->setNullable()->setValue(null),
-				(new Property('updatedAt'))->setPublic()->setType(\DateTimeInterface::class)->setNullable()->setValue(null),
+				(new Property('createdAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable()->setValue(null),
+				(new Property('updatedAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable()->setValue(null),
 			]);
 
 		$namespace = (new PhpNamespace($this->namespace))
@@ -349,7 +350,7 @@ EOT
 	}
 
 
-	public function generateUpdatedDataRepository(string $path)
+	public function generateUpdatedDataRepository(string $path): PhpFile
 	{
 		return $this->modifyFileWithTrait(
 			$path,

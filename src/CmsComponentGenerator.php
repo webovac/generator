@@ -31,10 +31,10 @@ class CmsComponentGenerator extends ComponentGenerator
 		parent::__construct($name, $appNamespace, $module, $entityName, $withTemplateName, $type, $factory);
 		if ($this->entityName) {
 			$this->lentityName = lcfirst($this->entityName);
-			$this->entity = "{$this->appNamespace}\Model\\{$this->entityName}\\{$this->entityName}";
+			$this->entity = "$this->appNamespace\Model\\$this->entityName\\$this->entityName";
 		}
 		$this->lname = lcfirst($name);
-		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\{$this->module}" : '') . "\Control\\{$this->name}";
+		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\$this->module" : '') . "\Control\\$this->name";
 	}
 
 
@@ -59,10 +59,10 @@ class CmsComponentGenerator extends ComponentGenerator
 				->setBody($this->entityName
 					? <<<EOT
 assert(\$this->entity instanceof $this->entityName);
-return \$this->{$this->lname}->create(\$this->entity);
+return \$this->$this->lname->create(\$this->entity);
 EOT
 					: <<<EOT
-return \$this->{$this->lname}->create();
+return \$this->$this->lname->create();
 EOT);
 			$class->addMember($createComponentMethod, true);
 			$namespace
@@ -90,7 +90,7 @@ EOT);
 				unset($components[$key]);
 			}
 			$c .= " => /*(n*/\\$this->entity::class";
-		};
+		}
 		if ($this->mode === CmsGenerator::MODE_ADD) {
 			if (!in_array($c, $components, true)) {
 				$components[] = $c;

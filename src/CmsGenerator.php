@@ -16,8 +16,8 @@ use Webovac\Core\Control\BaseControl;
 
 class CmsGenerator extends Generator
 {
-	public const MODE_ADD = 'add';
-	public const MODE_REMOVE = 'remove';
+	public const string MODE_ADD = 'add';
+	public const string MODE_REMOVE = 'remove';
 
 
 	public function __construct(
@@ -36,7 +36,8 @@ class CmsGenerator extends Generator
 		bool $withMigrationGroup = false,
 		bool $withInstallGroups = false,
 		string $type = 'module',
-	) {
+	): void
+	{
 		$generator = new CmsModuleGenerator(
 			name: $name,
 			appNamespace: $this->appNamespace,
@@ -55,7 +56,7 @@ class CmsGenerator extends Generator
 		$this->createFile("$basePath/Control/$name/{$name}Control.php", $generator->generateMainComponent());
 		$this->createFile("$basePath/Control/$name/I{$name}Control.php", $generator->generateMainFactory());
 		$this->createFile("$basePath/Control/$name/{$name}Template.php", $generator->generateMainTemplate());
-		$this->createFile("$basePath/Control/$name/{$lname}.latte", $generator->generateMainLatte());
+		$this->createFile("$basePath/Control/$name/$lname.latte", $generator->generateMainLatte());
 		if ($withModel) {
 			$this->createFile("$basePath/Model/{$name}DataModel.php", $generator->generateDataModel());
 			$this->createFile("$basePath/Model/{$name}Orm.php", $generator->generateModel());
@@ -120,10 +121,10 @@ class CmsGenerator extends Generator
 		$this->createFile("$basePath/$name/{$name}Control.php", $generator->generateControl(BaseControl::class));
 		$this->createFile("$basePath/$name/$lname.latte", $generator->generateLatte());
 		if ($type === ComponentGenerator::TYPE_DATASET) {
-			$this->createFile("$basePath/$name/{$lname}.neon", $generator->generateDatasetNeon());
+			$this->createFile("$basePath/$name/$lname.neon", $generator->generateDatasetNeon());
 		}
 		if ($type === ComponentGenerator::TYPE_MENU) {
-			$this->createFile("$basePath/$name/{$lname}.neon", $generator->generateMenuNeon());
+			$this->createFile("$basePath/$name/$lname.neon", $generator->generateMenuNeon());
 		}
 		if (!$module) {
 			return;
@@ -161,7 +162,8 @@ class CmsGenerator extends Generator
 		string $name,
 		?string $module = null,
 		bool $isPackage = false,
-	) {
+	): void
+	{
 		$this->updateModelFiles($name, $module, isPackage: $isPackage, mode: self::MODE_REMOVE);
 		$basePath = "$this->appDir/" . ($module ? "Module/$module/" : '') . "Model/$name";
 		FileSystem::delete($basePath);
@@ -218,11 +220,11 @@ class CmsGenerator extends Generator
 			return;
 		}
 		if ($module && $mode === self::MODE_ADD) {
-			$this->createFile("$basePath/$name/{$module}{$name}.php", $generator->generateEntityTrait());
-			$this->createFile("$basePath/$name/{$module}{$name}Mapper.php", $generator->generateMapperTrait());
-			$this->createFile("$basePath/$name/{$module}{$name}Repository.php", $generator->generateRepositoryTrait());
-			$this->createFile("$basePath/$name/{$module}{$name}Data.php", $generator->generateDataObjectTrait());
-			$this->createFile("$basePath/$name/{$module}{$name}DataRepository.php", $generator->generateDataRepositoryTrait());
+			$this->createFile("$basePath/$name/$module{$name}.php", $generator->generateEntityTrait());
+			$this->createFile("$basePath/$name/$module{$name}Mapper.php", $generator->generateMapperTrait());
+			$this->createFile("$basePath/$name/$module{$name}Repository.php", $generator->generateRepositoryTrait());
+			$this->createFile("$basePath/$name/$module{$name}Data.php", $generator->generateDataObjectTrait());
+			$this->createFile("$basePath/$name/$module{$name}DataRepository.php", $generator->generateDataRepositoryTrait());
 			if ($withConventions) {
 				$this->createFile("$basePath/$name/{$name}Conventions.php", $generator->generateConventions());
 			}

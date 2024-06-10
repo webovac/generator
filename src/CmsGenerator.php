@@ -114,7 +114,7 @@ class CmsGenerator extends Generator
 			type: $type,
 			factory: $factory,
 		);
-		$basePath = "$this->appDir/Module/$name/";
+		$basePath = "$this->appDir/Module/$module/Control";
 		$lname = lcfirst($name);
 		$this->createFile("$basePath/$name/{$name}Template.php", $generator->generateTemplate(BaseTemplate::class));
 		$this->createFile("$basePath/$name/I{$name}Control.php", $generator->generateFactory());
@@ -129,7 +129,7 @@ class CmsGenerator extends Generator
 		if (!$module) {
 			return;
 		}
-		$mainComponentPath = "$this->appDir/Module/$module/Control/$module/{$module}Control.php";
+		$mainComponentPath = "$basePath/$module/{$module}Control.php";
 		$this->createFile($mainComponentPath, $generator->generateUpdatedMainComponent($mainComponentPath));
 	}
 

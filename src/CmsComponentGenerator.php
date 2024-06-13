@@ -8,6 +8,7 @@ use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;
 use Nette\Utils\Arrays;
 use Stepapo\Generator\ComponentGenerator;
+use Webovac\Core\Attribute\RequiresEntity;
 
 
 class CmsComponentGenerator extends ComponentGenerator
@@ -69,6 +70,7 @@ EOT);
 				->addUse($factory)
 				->addUse($control);
 			if ($this->entityName) {
+				$createComponentMethod->addAttribute(RequiresEntity::class, [$this->entity]);
 				$namespace->addUse($this->entity);
 			}
 		} else {
@@ -77,40 +79,6 @@ EOT);
 			$namespace->removeUse($factory);
 			$namespace->removeUse($control);
 		}
-
-		$method = $class->getMethod('getComponentList');
-		$body = $method->getBody();
-
-		preg_match_all("/\t([^,]+),\n/", $body, $m);
-
-		$components = $m[1];
-		$c = "'$this->lname'";
-		if ($this->entityName) {
-			if (($key = array_search($c, $components)) !== false) {
-				unset($components[$key]);
-			}
-			$c .= " => /*(n*/\\$this->entity::class";
-		}
-		if ($this->mode === CmsGenerator::MODE_ADD) {
-			if (!in_array($c, $components, true)) {
-				$components[] = $c;
-			}
-			sort($components);
-		} else {
-			if (($key = array_search($c, $components)) !== false) {
-				unset($components[$key]);
-			}
-		}
-		$componentList = '';
-		foreach ($components as $component) {
-			$componentList .= "\n\t$component,";
-		}
-
-		$method->setBody(<<<EOT
-return [{$componentList}
-];
-EOT
-);
 
 		return $file;
 	}

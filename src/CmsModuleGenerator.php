@@ -107,7 +107,7 @@ EOT);
 			->setReturnType('void')
 			->setBody(<<<EOT
 \$this->onStartup[] = function () {
-	\$this->addComponents('$this->lname', {$this->name}Control::getComponentList());
+	\$this->addComponents('$this->lname', \$this->getComponentList({$this->name}Control::class));
 };
 EOT);
 
@@ -221,30 +221,18 @@ EOT);
 			->setStatic()
 			->setReturnType('string')
 			->setBody("return '$this->lname';");
-		$getComponentListMethod = (new Method('getComponentList'))
-			->setPublic()
-			->setStatic()
-			->setReturnType('array')
-			->setBody(<<<EOT
-return [
-
-];
-EOT);
 		$renderMethod = (new Method('render'))
 			->setPublic()
 			->setReturnType('void')
 			->setBody("\$this->template->render(__DIR__ . '/$this->lname.latte');");
-
 		$constructMethod
 			->addPromotedParameter('web')
 			->setPrivate()
 			->setType($this->web);
-
 		$constructMethod
 			->addPromotedParameter('language')
 			->setPrivate()
 			->setType($this->language);
-
 		$constructMethod
 			->addPromotedParameter('entity')
 			->setPrivate()
@@ -257,7 +245,6 @@ EOT);
 			->addComment("@property {$this->name}Template \$template")
 			->addMember($constructMethod)
 			->addMember($getModuleNameMethod)
-			->addMember($getComponentListMethod)
 			->addMember($renderMethod);
 
 		$namespace = (new PhpNamespace("$this->namespace\Control\\$this->name"))

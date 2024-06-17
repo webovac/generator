@@ -17,7 +17,6 @@ use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
 use Nextras\Dbal\Utils\DateTimeImmutable;
 use Nextras\Orm\Collection\ICollection;
-use Nextras\Orm\Entity\IEntity;
 use Nextras\Orm\Mapper\Dbal\Conventions\IConventions;
 use Nextras\Orm\StorageReflection\StringHelper;
 use Stepapo\Generator\ModelGenerator;
@@ -214,13 +213,13 @@ EOT
 			->addComment("@method $this->name[]|ICollection findBy(array \$conds)")
 			->addComment("@method $this->name|null getById(mixed \$id)")
 			->addComment("@method $this->name|null getBy(array \$conds)")
-			->addComment("@method $this->name createFromData({$this->name}Data \$data, ?$this->name \$original = null, ?IEntity \$parent = null, ?string \$parentName = null, ?Person \$person = null, ?\DateTimeInterface \$date = null, bool \$getOriginalByData = false)");
+			->addComment("@method $this->name createFromData({$this->name}Data \$data, ?$this->name \$original = null, ?CmsEntity \$parent = null, ?string \$parentName = null, ?Person \$person = null, ?\DateTimeInterface \$date = null, bool \$getOriginalByData = false)");
 
 		$namespace = (new PhpNamespace($this->modelNamespace))
 			->addUse(CmsRepository::class)
 			->addUse(ICollection::class)
 			->addUse("$this->modelNamespace\\{$this->name}Data")
-			->addUse(IEntity::class)
+			->addUse(CmsEntity::class)
 			->add($class);
 
 		if ($this->name !== 'Person') {

@@ -15,12 +15,12 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
-use Nextras\Orm\Entity\IEntity;
 use Webovac\Core\Control\BaseControl;
 use Webovac\Core\DI\BaseExtension;
 use Webovac\Core\InstallGroup;
 use Webovac\Core\MainModuleControl;
 use Webovac\Core\MigrationGroup;
+use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Module;
 
 
@@ -138,7 +138,7 @@ EOT);
 
 		$trait->addProperty('entity')
 			->setPrivate()
-			->setType(IEntity::class)
+			->setType(CmsEntity::class)
 			->setNullable()
 			->setValue(null);
 
@@ -148,7 +148,7 @@ EOT);
 			->addUse($this->mainControlInterface)
 			->addUse($this->mainControl)
 			->addUse(Inject::class)
-			->addUse(IEntity::class)
+			->addUse(CmsEntity::class)
 			->add($trait);
 
 		$file = (new PhpFile())->setStrictTypes();
@@ -236,7 +236,7 @@ EOT);
 		$constructMethod
 			->addPromotedParameter('entity')
 			->setPrivate()
-			->setType(IEntity::class)
+			->setType(CmsEntity::class)
 			->setNullable();
 
 		$class = (new ClassType("{$this->name}Control"))
@@ -252,7 +252,7 @@ EOT);
 			->addUse(MainModuleControl::class)
 			->addUse($this->language)
 			->addUse($this->web)
-			->addUse(IEntity::class)
+			->addUse(CmsEntity::class)
 			->add($class);
 
 		$file = (new PhpFile())->setStrictTypes();
@@ -277,7 +277,7 @@ EOT);
 
 		$createMethod
 			->addParameter('entity')
-			->setType(IEntity::class)
+			->setType(CmsEntity::class)
 			->setNullable()
 			->setDefaultValue(null);
 
@@ -287,7 +287,7 @@ EOT);
 		$namespace = (new PhpNamespace("$this->namespace\Control\\$this->name"))
 			->addUse($this->language)
 			->addUse($this->web)
-			->addUse(IEntity::class)
+			->addUse(CmsEntity::class)
 			->add($class);
 
 		$file = (new PhpFile)->setStrictTypes();

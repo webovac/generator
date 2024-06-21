@@ -35,6 +35,7 @@ class CmsGenerator extends Generator
 		bool $withDIExtension = false,
 		bool $withMigrationGroup = false,
 		bool $withInstallGroups = false,
+		bool $withInstallFile = false,
 		string $type = 'module',
 	): void
 	{
@@ -44,6 +45,7 @@ class CmsGenerator extends Generator
 			moduleNamespace: $this->moduleNamespace,
 			withMigrationGroup: $withMigrationGroup,
 			withInstallGroups: $withInstallGroups,
+			withInstallFile: $withInstallFile,
 		);
 		$basePath = "$this->appDir/Module/$name/";
 		$lname = lcfirst($name);
@@ -63,8 +65,9 @@ class CmsGenerator extends Generator
 		}
 		if ($withDIExtension) {
 			$this->createFile("$basePath/DI/{$name}Extension.php", $generator->generateDIExtension());
+			$this->createFile("$basePath/DI/config.neon", $generator->generateConfigNeon());
 		}
-		if ($withInstallGroups) {
+		if ($withInstallFile) {
 			$this->createFile("$basePath/install/$type.$lname.neon", $generator->generateInstallNeon($type));
 		}
 		if ($withMigrationGroup) {

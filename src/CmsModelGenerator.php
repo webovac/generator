@@ -276,11 +276,11 @@ EOT
 			$namespace->addUse($trait);
 		} else {
 			$class->setProperties([
-				(new Property('id'))->setPublic()->setType('int')->setNullable()->setValue(null),
-				(new Property('createdByPerson'))->setPublic()->setType('int|string')->setNullable()->setValue(null),
-				(new Property('updatedByPerson'))->setPublic()->setType('int|string')->setNullable()->setValue(null),
-				(new Property('createdAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable()->setValue(null),
-				(new Property('updatedAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable()->setValue(null),
+				(new Property('id'))->setPublic()->setType('int')->setNullable(),
+				(new Property('createdByPerson'))->setPublic()->setType('int|string')->setNullable(),
+				(new Property('updatedByPerson'))->setPublic()->setType('int|string')->setNullable(),
+				(new Property('createdAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable(),
+				(new Property('updatedAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable(),
 			]);
 		}
 		$file = (new PhpFile())->setStrictTypes();
@@ -303,11 +303,11 @@ EOT
 	{
 		$class = (new TraitType("$this->module{$this->name}Data"))
 			->setProperties([
-				(new Property('id'))->setPublic()->setType('int')->setNullable()->setValue(null),
-				(new Property('createdByPerson'))->setPublic()->setType('int|string')->setNullable()->setValue(null),
-				(new Property('updatedByPerson'))->setPublic()->setType('int|string')->setNullable()->setValue(null),
-				(new Property('createdAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable()->setValue(null),
-				(new Property('updatedAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable()->setValue(null),
+				(new Property('id'))->setPublic()->setType('int')->setNullable(),
+				(new Property('createdByPerson'))->setPublic()->setType('int|string')->setNullable(),
+				(new Property('updatedByPerson'))->setPublic()->setType('int|string')->setNullable(),
+				(new Property('createdAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable(),
+				(new Property('updatedAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable(),
 			]);
 
 		$namespace = (new PhpNamespace($this->namespace))

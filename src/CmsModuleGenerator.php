@@ -16,6 +16,7 @@ use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
 use Webovac\Core\Control\BaseControl;
+use Webovac\Core\Core;
 use Webovac\Core\DI\BaseExtension;
 use Webovac\Core\InstallGroup;
 use Webovac\Core\MainModuleControl;
@@ -31,8 +32,8 @@ class CmsModuleGenerator
 	private string $module;
 	private string $mainControl;
 	private string $mainControlInterface;
-	private string $web;
-	private string $language;
+	private string $webData;
+	private string $languageData;
 
 
 	public function __construct(
@@ -41,6 +42,7 @@ class CmsModuleGenerator
 		private readonly string $moduleNamespace,
 		private readonly bool $withMigrationGroup = false,
 		private readonly bool $withInstallGroups = false,
+		private readonly bool $withInstallFile = false,
 		private readonly string $mode = CmsGenerator::MODE_ADD,
 	) {
 		$this->lname = lcfirst($this->name);
@@ -48,8 +50,8 @@ class CmsModuleGenerator
 		$this->module = "$this->namespace\\$this->name";
 		$this->mainControl = "$this->namespace\Control\\$this->name\\{$this->name}Control";
 		$this->mainControlInterface = "$this->namespace\Control\\$this->name\I{$this->name}Control";
-		$this->web = "$this->appNamespace\Model\Web\Web";
-		$this->language = "$this->appNamespace\Model\Language\Language";
+		$this->webData = "$this->appNamespace\Model\Web\WebData";
+		$this->languageData = "$this->appNamespace\Model\Language\LanguageData";
 	}
 
 
@@ -74,10 +76,11 @@ class CmsModuleGenerator
 				->setPublic()
 				->setReturnType(MigrationGroup::class)
 				->setBody(<<<EOT
-return new MigrationGroup($this->name::getModuleName(), __DIR__ . '/migrations', [$this->name::getModuleName()]);
+return new MigrationGroup($this->name::getModuleName(), __DIR__ . '/migrations', [Core::getModuleName()]);
 EOT);
 			$class->addMember($getMigrationGroupMethod);
 			$namespace->addUse(MigrationGroup::class);
+			$namespace->addUse(Core::class);
 		}
 
 		if ($this->withInstallGroups) {
@@ -107,7 +110,7 @@ EOT);
 			->setReturnType('void')
 			->setBody(<<<EOT
 \$this->onStartup[] = function () {
-	\$this->addComponents('$this->lname', \$this->getComponentList({$this->name}Control::class));
+	\$this->addComponents('$this->lname', {$this->name}Control::class);
 };
 EOT);
 
@@ -116,7 +119,7 @@ EOT);
 		$createComponentMethod = (new Method("createComponent$this->name"))
 			->setPublic()
 			->setReturnType($this->mainControl)
-			->setBody("return \$this->$this->lname->create(\$this->web, \$this->language, \$this->entity);");
+			->setBody("return \$this->$this->lname->create(\$this->webData, \$this->languageData, \$this->entity);");
 
 		$trait = (new TraitType("{$this->name}Presenter"))
 			->addMember($injectStartupMethod)
@@ -127,14 +130,15 @@ EOT);
 			->setPublic()
 			->setType($this->mainControlInterface);
 
-		$trait->addProperty('web')
+		$trait->addProperty('webData')
 			->setPrivate()
-			->setType($this->web)
+			->setType($this->webData)
 			->setNullable();
 
-		$trait->addProperty('language')
+		$trait->addProperty('languageData')
 			->setPrivate()
-			->setType($this->language);
+			->setType($this->languageData)
+			->setNullable();
 
 		$trait->addProperty('entity')
 			->setPrivate()
@@ -143,8 +147,8 @@ EOT);
 			->setValue(null);
 
 		$namespace = (new PhpNamespace("$this->namespace\Presenter"))
-			->addUse($this->language)
-			->addUse($this->web)
+			->addUse($this->languageData)
+			->addUse($this->webData)
 			->addUse($this->mainControlInterface)
 			->addUse($this->mainControl)
 			->addUse(Inject::class)
@@ -216,23 +220,18 @@ EOT);
 	{
 		$constructMethod = (new Method('__construct'))
 			->setPublic();
-		$getModuleNameMethod = (new Method('getModuleName'))
-			->setPublic()
-			->setStatic()
-			->setReturnType('string')
-			->setBody("return '$this->lname';");
 		$renderMethod = (new Method('render'))
 			->setPublic()
 			->setReturnType('void')
 			->setBody("\$this->template->render(__DIR__ . '/$this->lname.latte');");
 		$constructMethod
-			->addPromotedParameter('web')
+			->addPromotedParameter('webData')
 			->setPrivate()
-			->setType($this->web);
+			->setType($this->webData);
 		$constructMethod
-			->addPromotedParameter('language')
+			->addPromotedParameter('languageData')
 			->setPrivate()
-			->setType($this->language);
+			->setType($this->languageData);
 		$constructMethod
 			->addPromotedParameter('entity')
 			->setPrivate()
@@ -244,14 +243,13 @@ EOT);
 			->setImplements([MainModuleControl::class])
 			->addComment("@property {$this->name}Template \$template")
 			->addMember($constructMethod)
-			->addMember($getModuleNameMethod)
 			->addMember($renderMethod);
 
 		$namespace = (new PhpNamespace("$this->namespace\Control\\$this->name"))
 			->addUse(BaseControl::class)
 			->addUse(MainModuleControl::class)
-			->addUse($this->language)
-			->addUse($this->web)
+			->addUse($this->languageData)
+			->addUse($this->webData)
 			->addUse(CmsEntity::class)
 			->add($class);
 
@@ -268,12 +266,12 @@ EOT);
 			->setReturnType("$this->namespace\Control\\$this->name\\{$this->name}Control");
 
 		$createMethod
-			->addParameter('web')
-			->setType($this->web);
+			->addParameter('webData')
+			->setType($this->webData);
 
 		$createMethod
-			->addParameter('language')
-			->setType($this->language);
+			->addParameter('languageData')
+			->setType($this->languageData);
 
 		$createMethod
 			->addParameter('entity')
@@ -285,8 +283,8 @@ EOT);
 			->addMember($createMethod);
 
 		$namespace = (new PhpNamespace("$this->namespace\Control\\$this->name"))
-			->addUse($this->language)
-			->addUse($this->web)
+			->addUse($this->languageData)
+			->addUse($this->webData)
 			->addUse(CmsEntity::class)
 			->add($class);
 
@@ -317,6 +315,7 @@ EOT);
 	{
 		$latte = <<<EOT
 {templateType $this->namespace\Control\\$this->name\\{$this->name}Template}
+
 EOT;
 
 		return $latte;
@@ -353,57 +352,11 @@ EOT;
 
 	public function generateDIExtension(): PhpFile
 	{
-		$loadConfigurationMethod = (new Method('loadConfiguration'))
-			->setPublic()
-			->setReturnType('void')
-			->setBody(<<<EOT
-\$builder = \$this->getContainerBuilder();
-\$this->createSearchExtension(\$builder);
-\$this->compiler->loadDefinitionsFromConfig(
-	(array) \$this->loadFromFile(__DIR__ . '/config.neon')['services'],
-);
-EOT);
-		$getModuleNameMethod = (new Method('getModuleName'))
-			->setProtected()
-			->setReturnType('string')
-			->setBody(<<<EOT
-return $this->name::getModuleName();
-EOT);
-
-		$getSearchConfigMethod = (new Method('getSearchConfig'))
-			->setProtected()
-			->setReturnType('array')
-			->setBody(<<<EOT
-return [
-	'main' => [
-		'in' => __DIR__ . '/../',
-		'implements' => Module::class,
-	],
-	'command' => [
-		'in' => __DIR__ . '/../',
-		'classes' => '*Command',
-	],
-	'control' => [
-		'in' => __DIR__ . '/../',
-		'classes' => 'I*Control',
-	],
-	'lib' => [
-		'in' => __DIR__ . '/../',
-		'classes' => '$this->namespace\**\Lib\**',
-	],
-];
-EOT);
-
 		$class = (new ClassType("{$this->name}Extension"))
-			->setExtends(BaseExtension::class)
-			->addMember($loadConfigurationMethod)
-			->addMember($getModuleNameMethod)
-			->addMember($getSearchConfigMethod);
+			->setExtends(BaseExtension::class);
 
 		$namespace = (new PhpNamespace("$this->namespace\DI"))
 			->addUse(BaseExtension::class)
-			->addUse(Module::class)
-			->addUse($this->module)
 			->add($class);
 
 		$file = (new PhpFile())->setStrictTypes();
@@ -413,28 +366,59 @@ EOT);
 	}
 
 
+	public function generateConfigNeon(): string
+	{
+		return <<<EOT
+services:
+
+EOT;
+	}
+
+
 	public function generateInstallNeon(string $type): string
 	{
-		$homePage = match($type) {
-			'module' => $this->name . ':Home',
-			'web' => 'Home',
-		};
-		$neon = <<<EOT
+		if ($type === 'module') {
+			$neon = <<<EOT
 name: $this->name
-homePage: {$homePage}
+homePage: {$this->name}:Home
 icon:
 translations:
-	cs: [title: $this->name, basePath: , description: '']
-	en: [title: $this->name, basePath: en, description: '']
+	cs: [title: $this->name, basePath: $this->lname, description: '']
+	en: [title: $this->name, basePath: $this->lname, description: '']
 pages:
-	$homePage:
+	{$this->name}:Home:
 		icon: 
 		translations:
 			cs: [title: $this->name, path: , content: '<h1>$this->name</h1>']
 			en: [title: $this->name, path: , content: '<h1>$this->name</h1>']
 tree:
-	$homePage:
+	{$this->name}:Home:
+
 EOT;
+		} else if ($type === 'web') {
+			$neon = <<<EOT
+host: %host%
+code: $this->lname
+homePage: Home
+color: ''
+complementaryColor: ''
+iconBackgroundColor: ''
+layout: default 
+translations:
+	cs: [title: $this->name]
+	en: [title: $this->name]
+pages:
+	Home:
+		icon: 
+		translations:
+			cs: [title: $this->name, path: , content: '<h1>$this->name</h1>']
+			en: [title: $this->name, path: en, content: '<h1>$this->name</h1>']
+webModules: [Admin, Auth]
+tree:
+	Home:
+
+EOT;
+		}
 		return $neon;
 	}
 

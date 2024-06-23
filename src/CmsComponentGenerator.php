@@ -4,11 +4,18 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
+use Nette\Application\UI\Form;
+use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\InterfaceType;
 use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;
+use Nette\PhpGenerator\PhpNamespace;
+use Nette\Utils\ArrayHash;
 use Nette\Utils\Arrays;
+use Stepapo\Dataset\UI\Dataset\Dataset;
 use Stepapo\Generator\ComponentGenerator;
 use Webovac\Core\Attribute\RequiresEntity;
+use Webovac\Core\Factory;
 
 
 class CmsComponentGenerator extends ComponentGenerator
@@ -36,6 +43,101 @@ class CmsComponentGenerator extends ComponentGenerator
 		}
 		$this->lname = lcfirst($name);
 		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\$this->module" : '') . "\Control\\$this->name";
+	}
+
+
+	public function generateControl(string $base): PhpFile
+	{
+		$constructMethod = (new Method('__construct'))
+			->setPublic();
+
+		$renderMethod = (new Method('render'))
+			->setPublic()
+			->setReturnType('void');
+
+		$class = (new ClassType("{$this->name}Control"))
+			->setExtends($base)
+			->addComment("@property {$this->name}Template \$template")
+			->addMember($constructMethod)
+			->addMember($renderMethod);
+
+		$namespace = (new PhpNamespace($this->namespace))
+			->addUse($base)
+			->add($class);
+
+		if ($this->entityName) {
+			$constructMethod
+				->addPromotedParameter($this->lentityName)
+				->setPrivate()
+				->setType($this->entity);
+			$renderMethod->addBody("\$this->template->{$this->lentityName} = \$this->{$this->lentityName};");
+			$namespace->addUse($this->entity);
+		}
+
+		if ($this->withTemplateName) {
+			$constructMethod
+				->addPromotedParameter('templateName')
+				->setType('string');
+		}
+
+		$renderMethod->addBody("\$this->template->render(__DIR__ . '/" . ($this->withTemplateName ? "' . \$this->templateName . '" : $this->lname) . ".latte');");
+
+		if ($this->type) {
+			if ($this->factory) {
+				$constructMethod
+					->addPromotedParameter($this->type . 'Factory')
+					->setPrivate()
+					->setType($this->factory);
+				$namespace->addUse($this->factory);
+			}
+			switch ($this->type) {
+				case self::TYPE_FORM:
+					$this->createFormMethods($namespace, $class);
+					break;
+				case self::TYPE_DATASET:
+					$this->createDatasetMethods($namespace, $class);
+					break;
+			}
+		}
+
+
+		$file = (new PhpFile)->setStrictTypes();
+		$file->addNamespace($namespace);
+
+		return $file;
+	}
+
+
+	public function generateFactory(): PhpFile
+	{
+		$createMethod = (new Method('create'))
+			->setReturnType("{$this->namespace}\\{$this->name}Control");
+
+		$class = (new InterfaceType("I{$this->name}Control"))
+			->setExtends(Factory::class)
+			->addMember($createMethod);
+
+		$namespace = (new PhpNamespace($this->namespace))
+			->add($class)
+			->addUse(Factory::class);
+
+		if ($this->entityName) {
+			$createMethod
+				->addParameter($this->lentityName)
+				->setType($this->entity);
+			$namespace->addUse($this->entity);
+		}
+
+		if ($this->withTemplateName) {
+			$createMethod
+				->addParameter('templateName')
+				->setType('string');
+		}
+
+		$file = (new PhpFile)->setStrictTypes();
+		$file->addNamespace($namespace);
+
+		return $file;
 	}
 
 
@@ -81,5 +183,58 @@ EOT);
 		}
 
 		return $file;
+	}
+
+
+	private function createFormMethods(PhpNamespace $namespace, ClassType $class): void
+	{
+		$createComponentMethod = (new Method('createComponentForm'))
+			->setPublic()
+			->setReturnType(Form::class)
+			->addBody(
+				$this->factory
+					? "\$form = \$this->{$this->type}Factory->create();"
+					: "\$form = new Form;"
+			)
+			->addBody("\$form->onSuccess[] = [\$this, 'formSucceeded'];")
+			->addBody("return \$form;");
+
+		$formSucceededMethod = (new Method('formSucceeded'))
+			->setPublic()
+			->setReturnType('void');
+		$formSucceededMethod->addParameter('form')->setType(Form::class);
+		$formSucceededMethod->addParameter('values')->setType(ArrayHash::class);
+
+		$class
+			->addMember($createComponentMethod)
+			->addMember($formSucceededMethod);
+		$namespace
+			->addUse(Form::class)
+			->addUse(ArrayHash::class);
+	}
+
+
+	private function createDatasetMethods(PhpNamespace $namespace, ClassType $class): void
+	{
+		$factoryBody = <<<EOT
+	__DIR__ . '/{$this->lname}.neon',
+	[
+		'collection' => '',
+		'repository' => '',
+	],
+EOT;
+
+		$createComponentMethod = (new Method('createComponentDataset'))
+			->setPublic()
+			->setReturnType(Dataset::class)
+			->addBody(
+				$this->factory
+					? "return \$this->{$this->type}Factory->create(\n{$factoryBody}\n);"
+					: "return Dataset::createFromNeon(\n{$factoryBody}\n);"
+			);
+
+		$class
+			->addMember($createComponentMethod);
+		$namespace->addUse(Dataset::class);
 	}
 }

@@ -52,7 +52,7 @@ class CmsModelGenerator extends ModelGenerator
 	}
 
 
-	public function generateCmsEntity(array $implements): PhpFile
+	public function generateCmsEntity(array $implements = []): PhpFile
 	{
 		$getDataClassMethod = (new Method('getDataClass'))
 			->setPublic()
@@ -94,9 +94,10 @@ class CmsModelGenerator extends ModelGenerator
 
 	public function generateUpdatedEntity(string $path, array $implements = []): PhpFile
 	{
-		return $this->modifyFileWithTrait(
+		return $this->modifyFile(
 			$path,
 			"$this->namespace\\$this->module$this->name",
+			$implements,
 			fn() => $this->generateCmsEntity($implements),
 		);
 	}
@@ -174,10 +175,10 @@ EOT
 
 	public function generateUpdatedMapper(string $path): PhpFile
 	{
-		return $this->modifyFileWithTrait(
+		return $this->modifyFile(
 			$path,
 			"$this->namespace\\$this->module{$this->name}Mapper",
-			fn() => $this->generateCmsMapper(),
+			create: fn() => $this->generateCmsMapper(),
 		);
 	}
 
@@ -241,10 +242,10 @@ EOT
 
 	public function generateUpdatedRepository(string $path): PhpFile
 	{
-		return $this->modifyFileWithTrait(
+		return $this->modifyFile(
 			$path,
 			"$this->namespace\\$this->module{$this->name}Repository",
-			fn() => $this->generateCmsRepository(),
+			create: fn() => $this->generateCmsRepository(),
 		);
 	}
 
@@ -291,10 +292,10 @@ EOT
 
 	public function generateUpdatedDataObject(string $path): PhpFile
 	{
-		return $this->modifyFileWithTrait(
+		return $this->modifyFile(
 			$path,
 			"$this->namespace\\$this->module{$this->name}Data",
-			fn() => $this->generateDataObject(),
+			create: fn() => $this->generateDataObject(),
 		);
 	}
 
@@ -351,10 +352,10 @@ EOT
 
 	public function generateUpdatedDataRepository(string $path): PhpFile
 	{
-		return $this->modifyFileWithTrait(
+		return $this->modifyFile(
 			$path,
 			"$this->namespace\\$this->module{$this->name}DataRepository",
-			fn() => $this->generateDataRepository(),
+			create: fn() => $this->generateDataRepository(),
 		);
 	}
 
@@ -428,7 +429,7 @@ EOT
 	}
 
 
-	private function modifyFileWithTrait(string $path, string $trait, ?callable $create = null): PhpFile
+	private function modifyFile(string $path, string $trait, array $implements = [], ?callable $create = null): PhpFile
 	{
 		if (!($content = @file_get_contents($path)) && $create && $this->mode === CmsGenerator::MODE_ADD) {
 			return $create();
@@ -448,6 +449,13 @@ EOT
 		} elseif ($this->mode === CmsGenerator::MODE_REMOVE && array_key_exists($trait, $class->getTraits())) {
 			$class->removeTrait($trait);
 			$namespace->removeUse($trait);
+		}
+		foreach ($implements as $implement) {
+			if (array_key_exists($implement, $class->getImplements())) {
+				continue;
+			}
+			$class->addImplement($implement);
+			$namespace->addUse($implement);
 		}
 		return $file;
 	}

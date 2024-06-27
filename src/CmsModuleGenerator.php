@@ -76,7 +76,7 @@ class CmsModuleGenerator
 				->setPublic()
 				->setReturnType(MigrationGroup::class)
 				->setBody(<<<EOT
-return new MigrationGroup($this->name::getModuleName(), __DIR__ . '/migrations', [Core::getModuleName()]);
+return new MigrationGroup($this->name::getModuleName(), __DIR__ . '/migrations', ['core-create']);
 EOT);
 			$class->addMember($getMigrationGroupMethod);
 			$namespace->addUse(MigrationGroup::class);

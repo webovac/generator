@@ -18,7 +18,6 @@ use Nette\Utils\Arrays;
 use Webovac\Core\Control\BaseControl;
 use Webovac\Core\Core;
 use Webovac\Core\DI\BaseExtension;
-use Webovac\Core\InstallGroup;
 use Webovac\Core\MainModuleControl;
 use Webovac\Core\MigrationGroup;
 use Webovac\Core\Model\CmsEntity;
@@ -72,19 +71,19 @@ class CmsModuleGenerator
 			->add($class);
 
 		if ($this->withMigrationGroup) {
-			$getMigrationGroupMethod = (new Method('getMigrationGroup'))
+			$getDefinitionGroupMethod = (new Method('getDefinitionGroup'))
 				->setPublic()
 				->setReturnType(MigrationGroup::class)
 				->setBody(<<<EOT
-return new MigrationGroup($this->name::getModuleName(), __DIR__ . '/migrations', ['core-create']);
+return new MigrationGroup($this->name::getModuleName(), __DIR__ . '/migrations', [Core::getModuleName()]);
 EOT);
-			$class->addMember($getMigrationGroupMethod);
+			$class->addMember($getDefinitionGroupMethod);
 			$namespace->addUse(MigrationGroup::class);
 			$namespace->addUse(Core::class);
 		}
 
 		if ($this->withInstallGroups) {
-			$getInstallGroupsMethod = (new Method('getInstallGroups'))
+			$getManipulationGroups = (new Method('getManipulationGroups'))
 				->setPublic()
 				->setReturnType('array')
 				->setBody(<<<EOT
@@ -92,8 +91,8 @@ return [
 	new InstallGroup('', '', []),
 ];
 EOT);
-			$class->addMember($getInstallGroupsMethod);
-			$namespace->addUse(InstallGroup::class);
+			$class->addMember($getManipulationGroups);
+			$namespace->addUse(MigrationGroup::class);
 		}
 
 		$file = (new PhpFile())->setStrictTypes();

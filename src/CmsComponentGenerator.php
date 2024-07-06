@@ -12,7 +12,7 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\Utils\ArrayHash;
 use Nette\Utils\Arrays;
-use Stepapo\Dataset\UI\Dataset\Dataset;
+use Stepapo\Dataset\Control\Dataset\DatasetControl;
 use Stepapo\Generator\ComponentGenerator;
 use Webovac\Core\Attribute\RequiresEntity;
 use Webovac\Core\Factory;
@@ -226,7 +226,7 @@ EOT;
 
 		$createComponentMethod = (new Method('createComponentDataset'))
 			->setPublic()
-			->setReturnType(Dataset::class)
+			->setReturnType(DatasetControl::class)
 			->addBody(
 				$this->factory
 					? "return \$this->{$this->type}Factory->create(\n{$factoryBody}\n);"
@@ -235,6 +235,6 @@ EOT;
 
 		$class
 			->addMember($createComponentMethod);
-		$namespace->addUse(Dataset::class);
+		$namespace->addUse(DatasetControl::class);
 	}
 }

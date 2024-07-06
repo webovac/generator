@@ -20,8 +20,8 @@ use Nextras\Orm\Collection\ICollection;
 use Nextras\Orm\Mapper\Dbal\Conventions\IConventions;
 use Nextras\Orm\StorageReflection\StringHelper;
 use Stepapo\Generator\ModelGenerator;
-use Webovac\Core\Lib\Collection;
-use Webovac\Core\Model\CmsData;
+use Stepapo\Utils\Model\Collection;
+use Stepapo\Utils\Model\Item;
 use Webovac\Core\Model\CmsDataRepository;
 use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Model\CmsMapper;
@@ -267,9 +267,9 @@ EOT
 	public function generateDataObject(): PhpFile
 	{
 		$class = (new ClassType("{$this->name}Data"))
-			->setExtends(CmsData::class);
+			->setExtends(Item::class);
 		$namespace = (new PhpNamespace($this->modelNamespace))
-			->addUse(CmsData::class)
+			->addUse(Item::class)
 			->add($class);
 		if ($this->module) {
 			$trait =  "$this->namespace\\$this->module{$this->name}Data";

@@ -214,7 +214,7 @@ EOT
 			->addComment("@method $this->name[]|ICollection findBy(array \$conds)")
 			->addComment("@method $this->name|null getById(mixed \$id)")
 			->addComment("@method $this->name|null getBy(array \$conds)")
-			->addComment("@method $this->name createFromData({$this->name}Data \$data, ?$this->name \$original = null, ?CmsEntity \$parent = null, ?string \$parentName = null, ?Person \$person = null, ?\DateTimeInterface \$date = null, bool \$getOriginalByData = false)");
+			->addComment("@method $this->name createFromData({$this->name}Data \$data, ?$this->name \$original = null, ?CmsEntity \$parent = null, ?string \$parentName = null, ?Person \$person = null, ?\DateTimeInterface \$date = null, bool \$skipDefaults = false, bool \$getOriginalByData = false)");
 
 		$namespace = (new PhpNamespace($this->modelNamespace))
 			->addUse(CmsRepository::class)

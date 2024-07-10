@@ -164,10 +164,11 @@ class CmsGenerator extends Generator
 	public function removeCmsModel(
 		string $name,
 		?string $module = null,
+		bool $withTraits = false,
 		bool $isPackage = false,
 	): void
 	{
-		$this->updateModelFiles($name, $module, isPackage: $isPackage, mode: self::MODE_REMOVE);
+		$this->updateModelFiles($name, $module, withTraits: $withTraits, isPackage: $isPackage, mode: self::MODE_REMOVE);
 		$basePath = "$this->appDir/" . ($module ? "Module/$module/" : '') . "Model/$name";
 		FileSystem::delete($basePath);
 	}
@@ -176,18 +177,20 @@ class CmsGenerator extends Generator
 	public function createCmsModel(
 		string $name,
 		?string $module = null,
+		bool $withTraits = false,
 		bool $withConventions = false,
 		array $implements = [],
 		bool $isPackage = false,
 	): void
 	{
-		$this->updateModelFiles($name, $module, $withConventions, $implements, $isPackage);
+		$this->updateModelFiles($name, $module, $withTraits, $withConventions, $implements, $isPackage);
 	}
 
 
 	private function updateModelFiles(
 		string $name,
 		?string $module = null,
+		bool $withTraits = false,
 		bool $withConventions = false,
 		array $implements = [],
 		bool $isPackage = false,
@@ -199,23 +202,26 @@ class CmsGenerator extends Generator
 			appNamespace: $this->appNamespace,
 			moduleNamespace: $this->moduleNamespace,
 			module: $module,
+			withTraits: $withTraits,
 			withConventions: $withConventions,
 			mode: $mode,
 		);
 		$modelBasePath = "$this->appDir/Model";
 		$basePath = "$this->appDir/" . ($module ? "Module/$module/" : '') . "Model";
 
-		$entityPath = "$modelBasePath/$name/$name.php";
-		$entity = $generator->generateUpdatedEntity($entityPath, $implements);
-		$this->createFile($entityPath, $entity);
-		$mapperPath = "$modelBasePath/$name/{$name}Mapper.php";
-		$this->createFile($mapperPath, $generator->generateUpdatedMapper($mapperPath));
-		$repositoryPath = "$modelBasePath/$name/{$name}Repository.php";
-		$this->createFile($repositoryPath, $generator->generateUpdatedRepository($repositoryPath));
-		$dataObjectPath = "$modelBasePath/$name/{$name}Data.php";
-		$this->createFile($dataObjectPath,  $generator->generateUpdatedDataObject($dataObjectPath));
-		$dataRepositoryPath = "$modelBasePath/$name/{$name}DataRepository.php";
-		$this->createFile($dataRepositoryPath, $generator->generateUpdatedDataRepository($dataRepositoryPath));
+		if ($withTraits) {
+			$entityPath = "$modelBasePath/$name/$name.php";
+			$entity = $generator->generateUpdatedEntity($entityPath, $implements);
+			$this->createFile($entityPath, $entity);
+			$mapperPath = "$modelBasePath/$name/{$name}Mapper.php";
+			$this->createFile($mapperPath, $generator->generateUpdatedMapper($mapperPath));
+			$repositoryPath = "$modelBasePath/$name/{$name}Repository.php";
+			$this->createFile($repositoryPath, $generator->generateUpdatedRepository($repositoryPath));
+			$dataObjectPath = "$modelBasePath/$name/{$name}Data.php";
+			$this->createFile($dataObjectPath,  $generator->generateUpdatedDataObject($dataObjectPath));
+			$dataRepositoryPath = "$modelBasePath/$name/{$name}DataRepository.php";
+			$this->createFile($dataRepositoryPath, $generator->generateUpdatedDataRepository($dataRepositoryPath));
+		}
 		if ($mode === self::MODE_REMOVE && $generator->shouldEntityBeDeleted($entity)) {
 			FileSystem::delete("$modelBasePath/$name");
 		}
@@ -223,19 +229,20 @@ class CmsGenerator extends Generator
 			return;
 		}
 		if ($module && $mode === self::MODE_ADD) {
-			$this->createFile("$basePath/$name/$module{$name}.php", $generator->generateEntityTrait());
-			$this->createFile("$basePath/$name/$module{$name}Mapper.php", $generator->generateMapperTrait());
-			$this->createFile("$basePath/$name/$module{$name}Repository.php", $generator->generateRepositoryTrait());
-			$this->createFile("$basePath/$name/$module{$name}Data.php", $generator->generateDataObjectTrait());
-			$this->createFile("$basePath/$name/$module{$name}DataRepository.php", $generator->generateDataRepositoryTrait());
+			$className = $withTraits ? "$module{$name}" : $name;
+			$this->createFile("$basePath/$name/$className.php", $generator->generateEntityTrait());
+			$this->createFile("$basePath/$name/{$className}Mapper.php", $generator->generateMapperTrait());
+			$this->createFile("$basePath/$name/{$className}Repository.php", $generator->generateRepositoryTrait());
+			$this->createFile("$basePath/$name/{$className}Data.php", $generator->generateDataObjectTrait());
+			$this->createFile("$basePath/$name/{$className}DataRepository.php", $generator->generateDataRepositoryTrait());
 			if ($withConventions) {
-				$this->createFile("$basePath/$name/{$name}Conventions.php", $generator->generateConventions());
+				$this->createFile("$basePath/$name/{$className}Conventions.php", $generator->generateConventions());
 			}
 		}
-		$dataModelPath = "$basePath/{$module}DataModel.php";
-		$this->createFile($dataModelPath, $generator->generateUpdatedDataModel($dataModelPath));
-		$modelPath = "$basePath/{$module}Orm.php";
-		$this->createFile($modelPath, $generator->generateUpdatedModel($modelPath));
+//		$dataModelPath = "$basePath/{$module}DataModel.php";
+//		$this->createFile($dataModelPath, $generator->generateUpdatedDataModel($dataModelPath));
+//		$modelPath = "$basePath/{$module}Orm.php";
+//		$this->createFile($modelPath, $generator->generateUpdatedModel($modelPath));
 	}
 
 

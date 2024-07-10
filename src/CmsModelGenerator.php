@@ -41,6 +41,7 @@ class CmsModelGenerator extends ModelGenerator
 		private string $appNamespace,
 		private string $moduleNamespace,
 		private ?string $module = null,
+		private bool $withTraits = false,
 		private bool $withConventions = false,
 		private string $mode = CmsGenerator::MODE_ADD,
 	) {
@@ -105,7 +106,7 @@ class CmsModelGenerator extends ModelGenerator
 
 	public function generateEntityTrait(): PhpFile
 	{
-		$trait = (new TraitType("$this->module$this->name"))
+		$class = ($this->withTraits ? new TraitType("$this->module$this->name") : new ClassType($this->name))
 			->addComment("@property int \$id {primary}")
 			->addComment("@property DateTimeImmutable \$createdAt {default now}")
 			->addComment("@property DateTimeImmutable|null \$updatedAt")
@@ -113,8 +114,13 @@ class CmsModelGenerator extends ModelGenerator
 			->addComment("@property Person|null \$updatedByPerson {m:1 Person, oneSided=true}");
 
 		$namespace = (new PhpNamespace($this->namespace))
-			->add($trait)
+			->add($class)
 			->addUse(DateTimeImmutable::class);
+
+		if (!$this->withTraits) {
+			$class->setExtends(CmsEntity::class);
+			$namespace->addUse(CmsEntity::class);
+		}
 
 		if ($this->name !== 'Person') {
 			$namespace->addUse("$this->appNamespace\Model\Person\Person");
@@ -185,10 +191,15 @@ EOT
 
 	public function generateMapperTrait(): PhpFile
 	{
-		$trait = (new TraitType("$this->module{$this->name}Mapper"));
+		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}Mapper") : new ClassType("{$this->name}Mapper"));
 
 		$namespace = (new PhpNamespace($this->namespace))
-			->add($trait);
+			->add($class);
+
+		if (!$this->withTraits) {
+			$class->setExtends(CmsMapper::class);
+			$namespace->addUse(CmsMapper::class);
+		}
 
 		$file = (new PhpFile())->setStrictTypes();
 		$file->addNamespace($namespace);
@@ -252,10 +263,15 @@ EOT
 
 	public function generateRepositoryTrait(): PhpFile
 	{
-		$class = (new TraitType("$this->module{$this->name}Repository"));
+		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}Repository") : new ClassType("{$this->name}Repository"));
 
 		$namespace = (new PhpNamespace($this->namespace))
 			->add($class);
+
+		if (!$this->withTraits) {
+			$class->setExtends(CmsRepository::class);
+			$namespace->addUse(CmsRepository::class);
+		}
 
 		$file = (new PhpFile())->setStrictTypes();
 		$file->addNamespace($namespace);
@@ -302,7 +318,7 @@ EOT
 
 	public function generateDataObjectTrait(): PhpFile
 	{
-		$class = (new TraitType("$this->module{$this->name}Data"))
+		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}Data") : new ClassType("{$this->name}Data"))
 			->setProperties([
 				(new Property('id'))->setPublic()->setType('int')->setNullable(),
 				(new Property('createdByPerson'))->setPublic()->setType('int|string')->setNullable(),
@@ -313,6 +329,11 @@ EOT
 
 		$namespace = (new PhpNamespace($this->namespace))
 			->add($class);
+
+		if (!$this->withTraits) {
+			$class->setExtends(Item::class);
+			$namespace->addUse(Item::class);
+		}
 
 		$file = (new PhpFile())->setStrictTypes();
 		$file->addNamespace($namespace);
@@ -362,10 +383,15 @@ EOT
 
 	public function generateDataRepositoryTrait(): PhpFile
 	{
-		$class = (new TraitType("$this->module{$this->name}DataRepository"));
+		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}DataRepository") : new ClassType("{$this->name}DataRepository"));
 
 		$namespace = (new PhpNamespace($this->namespace))
 			->add($class);
+
+		if (!$this->withTraits) {
+			$class->setExtends(CmsDataRepository::class);
+			$namespace->addUse(CmsDataRepository::class);
+		}
 
 		$file = (new PhpFile())->setStrictTypes();
 		$file->addNamespace($namespace);
@@ -384,19 +410,20 @@ EOT
 		/** @var TraitType|ClassType $class */
 		$class = Arrays::first($file->getClasses());
 		$propertyName = "{$this->lname}Repository";
+		$type = $this->withTraits ? "$this->modelNamespace\\{$this->name}DataRepository" : "$this->namespace\\{$this->name}DataRepository";
 		if ($this->mode === CmsGenerator::MODE_ADD) {
 			$namespace
-				->addUse("$this->modelNamespace\\{$this->name}DataRepository")
+				->addUse($type)
 				->addUse(Inject::class);
 			$property = $class->hasProperty($propertyName)
 				? $class->getProperty($propertyName)
 				: $class->addProperty($propertyName);
 			$property
 				->setPublic()
-				->setType("$this->modelNamespace\\{$this->name}DataRepository")
+				->setType($type)
 				->setAttributes([new Attribute(Inject::class, [])]);
 		} elseif ($this->mode === CmsGenerator::MODE_REMOVE && $class->hasProperty($propertyName)) {
-			$namespace->removeUse("$this->modelNamespace\\{$this->name}DataRepository");
+			$namespace->removeUse($type);
 			$class->removeProperty($propertyName);
 		}
 
@@ -415,11 +442,12 @@ EOT
 		$class = Arrays::first($file->getClasses());
 		$comment = "@property-read {$this->name}Repository \${$this->lname}Repository";
 		$comments = explode("\n", $class->getComment() ?: '');
+		$type = $this->withTraits ? "$this->modelNamespace\\{$this->name}Repository" : "$this->namespace\\{$this->name}Repository";
 		if ($this->mode === CmsGenerator::MODE_ADD && !in_array($comment, $comments, true)) {
-			$namespace->addUse("$this->modelNamespace\\{$this->name}Repository");
+			$namespace->addUse($type);
 			$comments[] = $comment;
 		} elseif ($this->mode === CmsGenerator::MODE_REMOVE && in_array($comment, $comments, true)) {
-			$namespace->removeUse("$this->modelNamespace\\{$this->name}Repository");
+			$namespace->removeUse($type);
 			$comments = array_diff($comments, [$comment]);
 		}
 		sort($comments);

@@ -70,7 +70,7 @@ class CmsComponentGenerator extends ComponentGenerator
 				->addPromotedParameter($this->lentityName)
 				->setPrivate()
 				->setType($this->entity);
-			$renderMethod->addBody("\$this->template->{$this->lentityName} = \$this->{$this->lentityName};");
+			$renderMethod->addBody("\$this->template->$this->lentityName = \$this->$this->lentityName;");
 			$namespace->addUse($this->entity);
 		}
 
@@ -111,7 +111,7 @@ class CmsComponentGenerator extends ComponentGenerator
 	public function generateFactory(): PhpFile
 	{
 		$createMethod = (new Method('create'))
-			->setReturnType("{$this->namespace}\\{$this->name}Control");
+			->setReturnType("$this->namespace\\{$this->name}Control");
 
 		$class = (new InterfaceType("I{$this->name}Control"))
 			->setExtends(Factory::class)
@@ -217,7 +217,7 @@ EOT);
 	private function createDatasetMethods(PhpNamespace $namespace, ClassType $class): void
 	{
 		$factoryBody = <<<EOT
-	__DIR__ . '/{$this->lname}.neon',
+	__DIR__ . '/$this->lname.neon',
 	[
 		'collection' => '',
 		'repository' => '',
@@ -229,8 +229,8 @@ EOT;
 			->setReturnType(DatasetControl::class)
 			->addBody(
 				$this->factory
-					? "return \$this->{$this->type}Factory->create(\n{$factoryBody}\n);"
-					: "return Dataset::createFromNeon(\n{$factoryBody}\n);"
+					? "return \$this->{$this->type}Factory->create(\n$factoryBody\n);"
+					: "return Dataset::createFromNeon(\n$factoryBody\n);"
 			);
 
 		$class

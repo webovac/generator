@@ -312,12 +312,10 @@ EOT);
 
 	public function generateMainLatte(): string
 	{
-		$latte = <<<EOT
+		return <<<EOT
 {templateType $this->namespace\Control\\$this->name\\{$this->name}Template}
 
 EOT;
-
-		return $latte;
 	}
 
 
@@ -377,25 +375,25 @@ EOT;
 	public function generateInstallNeon(string $type): string
 	{
 		if ($type === 'module') {
-			$neon = <<<EOT
+			return <<<EOT
 name: $this->name
-homePage: {$this->name}:Home
+homePage: $this->name:Home
 icon:
 translations:
 	cs: [title: $this->name, basePath: $this->lname, description: '']
 	en: [title: $this->name, basePath: $this->lname, description: '']
 pages:
-	{$this->name}:Home:
+	$this->name:Home:
 		icon: 
 		translations:
 			cs: [title: $this->name, path: , content: '<h1>$this->name</h1>']
 			en: [title: $this->name, path: , content: '<h1>$this->name</h1>']
 tree:
-	{$this->name}:Home:
+	$this->name:Home:
 
 EOT;
 		} else if ($type === 'web') {
-			$neon = <<<EOT
+			return <<<EOT
 host: %host%
 code: $this->lname
 homePage: Home
@@ -418,7 +416,7 @@ tree:
 
 EOT;
 		}
-		return $neon;
+		return '';
 	}
 
 

@@ -229,7 +229,7 @@ class CmsGenerator extends Generator
 			return;
 		}
 		if ($module && $mode === self::MODE_ADD) {
-			$className = $withTraits ? "$module{$name}" : $name;
+			$className = $withTraits ? "$module$name" : $name;
 			$this->createFile("$basePath/$name/$className.php", $generator->generateEntityTrait());
 			$this->createFile("$basePath/$name/{$className}Mapper.php", $generator->generateMapperTrait());
 			$this->createFile("$basePath/$name/{$className}Repository.php", $generator->generateRepositoryTrait());

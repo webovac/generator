@@ -172,7 +172,8 @@ EOT);
 				->addUse($factory)
 				->addUse($control);
 			if ($this->entityName) {
-				$createComponentMethod->addAttribute(RequiresEntity::class, [$this->entity]);
+				$createComponentMethod->addAttribute(RequiresEntity::class, ["$this->entity::class"]);
+				$namespace->addUse(RequiresEntity::class);
 				$namespace->addUse($this->entity);
 			}
 		} else {

@@ -17,7 +17,9 @@ use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
 use Webovac\Core\Control\BaseControl;
 use Webovac\Core\Core;
+use Webovac\Core\DefinitionGroup;
 use Webovac\Core\DI\BaseExtension;
+use Webovac\Core\Factory;
 use Webovac\Core\MainModuleControl;
 use Webovac\Core\MigrationGroup;
 use Webovac\Core\Model\CmsEntity;
@@ -62,9 +64,16 @@ class CmsModuleGenerator
 			->setReturnType('string')
 			->setBody("return '$this->lname';");
 
+		$getCliSetupMethod = (new Method('getCliSetup'))
+			->setPublic()
+			->setStatic()
+			->setReturnType('array')
+			->setBody("return ['icon' => '', 'color' => 'white/blue'];");
+
 		$class = (new ClassType($this->name))
 			->setImplements([Module::class])
-			->addMember($getModuleNameMethod);
+			->addMember($getModuleNameMethod)
+			->addMember($getCliSetupMethod);
 
 		$namespace = (new PhpNamespace($this->namespace))
 			->addUse(Module::class)
@@ -75,10 +84,10 @@ class CmsModuleGenerator
 				->setPublic()
 				->setReturnType(MigrationGroup::class)
 				->setBody(<<<EOT
-return new MigrationGroup($this->name::getModuleName(), __DIR__ . '/migrations', [Core::getModuleName()]);
+return new DefinitionGroup($this->name::getModuleName(), $this->name::class, [Core::getModuleName()]);
 EOT);
 			$class->addMember($getDefinitionGroupMethod);
-			$namespace->addUse(MigrationGroup::class);
+			$namespace->addUse(DefinitionGroup::class);
 			$namespace->addUse(Core::class);
 		}
 
@@ -240,7 +249,7 @@ EOT);
 		$class = (new ClassType("{$this->name}Control"))
 			->setExtends(BaseControl::class)
 			->setImplements([MainModuleControl::class])
-			->addComment("@property {$this->name}Template \$template")
+//			->addComment("@property {$this->name}Template \$template")
 			->addMember($constructMethod)
 			->addMember($renderMethod);
 
@@ -279,11 +288,13 @@ EOT);
 			->setDefaultValue(null);
 
 		$class = (new InterfaceType("I{$this->name}Control"))
+			->setExtends(Factory::class)
 			->addMember($createMethod);
 
 		$namespace = (new PhpNamespace("$this->namespace\Control\\$this->name"))
 			->addUse($this->languageData)
 			->addUse($this->webData)
+			->addUse(Factory::class)
 			->addUse(CmsEntity::class)
 			->add($class);
 

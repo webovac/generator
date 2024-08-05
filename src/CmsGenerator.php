@@ -57,7 +57,7 @@ class CmsGenerator extends Generator
 		$this->createFile("$basePath/Lib/{$name}TemplateFactory.php", $generator->generateTemplateFactoryTrait());
 		$this->createFile("$basePath/Control/$name/{$name}Control.php", $generator->generateMainComponent());
 		$this->createFile("$basePath/Control/$name/I{$name}Control.php", $generator->generateMainFactory());
-		$this->createFile("$basePath/Control/$name/{$name}Template.php", $generator->generateMainTemplate());
+//		$this->createFile("$basePath/Control/$name/{$name}Template.php", $generator->generateMainTemplate());
 		$this->createFile("$basePath/Control/$name/$lname.latte", $generator->generateMainLatte());
 		if ($withModel) {
 			$this->createFile("$basePath/Model/{$name}DataModel.php", $generator->generateDataModel());
@@ -68,11 +68,10 @@ class CmsGenerator extends Generator
 			$this->createFile("$basePath/DI/config.neon", $generator->generateConfigNeon());
 		}
 		if ($withInstallFile) {
-			$this->createFile("$basePath/install/$type.$lname.neon", $generator->generateInstallNeon($type));
+			$this->createFile("$basePath/migrations/manipulations/insert.$type.$lname.neon", $generator->generateInstallNeon($type));
 		}
 		if ($withMigrationGroup) {
-			$this->createFile("$basePath/migrations/mysql/001-init.sql");
-			$this->createFile("$basePath/migrations/pgsql/001-init.sql");
+			$this->createFile("$basePath/migrations/definitions/001-init.neon");
 		}
 		$this->updateAppFiles($name, $withModel);
 	}

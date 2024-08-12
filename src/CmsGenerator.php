@@ -208,7 +208,7 @@ class CmsGenerator extends Generator
 		$modelBasePath = "$this->appDir/Model";
 		$basePath = "$this->appDir/" . ($module ? "Module/$module/" : '') . "Model";
 
-		if ($withTraits) {
+		if ($withTraits || $isPackage) {
 			$entityPath = "$modelBasePath/$name/$name.php";
 			$entity = $generator->generateUpdatedEntity($entityPath, $implements);
 			$this->createFile($entityPath, $entity);

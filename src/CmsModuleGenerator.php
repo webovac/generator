@@ -127,7 +127,7 @@ EOT);
 		$createComponentMethod = (new Method("createComponent$this->name"))
 			->setPublic()
 			->setReturnType($this->mainControl)
-			->setBody("return \$this->$this->lname->create(\$this->webData, \$this->languageData, \$this->entity);");
+			->setBody("return \$this->$this->lname->create(\$this->entity);");
 
 		$trait = (new TraitType("{$this->name}Presenter"))
 			->addMember($injectStartupMethod)
@@ -138,16 +138,6 @@ EOT);
 			->setPublic()
 			->setType($this->mainControlInterface);
 
-		$trait->addProperty('webData')
-			->setPrivate()
-			->setType($this->webData)
-			->setNullable();
-
-		$trait->addProperty('languageData')
-			->setPrivate()
-			->setType($this->languageData)
-			->setNullable();
-
 		$trait->addProperty('entity')
 			->setPrivate()
 			->setType(CmsEntity::class)
@@ -155,8 +145,6 @@ EOT);
 			->setValue(null);
 
 		$namespace = (new PhpNamespace("$this->namespace\Presenter"))
-			->addUse($this->languageData)
-			->addUse($this->webData)
 			->addUse($this->mainControlInterface)
 			->addUse($this->mainControl)
 			->addUse(Inject::class)
@@ -233,14 +221,6 @@ EOT);
 			->setReturnType('void')
 			->setBody("\$this->template->render(__DIR__ . '/$this->lname.latte');");
 		$constructMethod
-			->addPromotedParameter('webData')
-			->setPrivate()
-			->setType($this->webData);
-		$constructMethod
-			->addPromotedParameter('languageData')
-			->setPrivate()
-			->setType($this->languageData);
-		$constructMethod
 			->addPromotedParameter('entity')
 			->setPrivate()
 			->setType(CmsEntity::class)
@@ -256,8 +236,6 @@ EOT);
 		$namespace = (new PhpNamespace("$this->namespace\Control\\$this->name"))
 			->addUse(BaseControl::class)
 			->addUse(MainModuleControl::class)
-			->addUse($this->languageData)
-			->addUse($this->webData)
 			->addUse(CmsEntity::class)
 			->add($class);
 
@@ -274,14 +252,6 @@ EOT);
 			->setReturnType("$this->namespace\Control\\$this->name\\{$this->name}Control");
 
 		$createMethod
-			->addParameter('webData')
-			->setType($this->webData);
-
-		$createMethod
-			->addParameter('languageData')
-			->setType($this->languageData);
-
-		$createMethod
 			->addParameter('entity')
 			->setType(CmsEntity::class)
 			->setNullable()
@@ -292,8 +262,6 @@ EOT);
 			->addMember($createMethod);
 
 		$namespace = (new PhpNamespace("$this->namespace\Control\\$this->name"))
-			->addUse($this->languageData)
-			->addUse($this->webData)
 			->addUse(Factory::class)
 			->addUse(CmsEntity::class)
 			->add($class);

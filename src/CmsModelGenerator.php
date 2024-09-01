@@ -208,7 +208,7 @@ EOT
 	}
 
 
-	public function generateCmsRepository(): PhpFile
+	public function generateCmsRepository(array $implements = []): PhpFile
 	{
 		$getEntityClassNamesMethod = (new Method('getEntityClassNames'))
 			->setPublic()
@@ -243,7 +243,10 @@ EOT
 			$class->addTrait($trait);
 			$namespace->addUse($trait);
 		}
-
+		foreach ($implements as $implement) {
+			$class->addImplement($implement);
+			$namespace->addUse($implement);
+		}
 		$file = (new PhpFile())->setStrictTypes();
 		$file->addNamespace($namespace);
 
@@ -251,12 +254,12 @@ EOT
 	}
 
 
-	public function generateUpdatedRepository(string $path): PhpFile
+	public function generateUpdatedRepository(string $path, array $implements = []): PhpFile
 	{
 		return $this->modifyFile(
 			$path,
 			"$this->namespace\\$this->module{$this->name}Repository",
-			create: fn() => $this->generateCmsRepository(),
+			create: fn() => $this->generateCmsRepository($implements),
 		);
 	}
 

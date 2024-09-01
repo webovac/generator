@@ -178,11 +178,12 @@ class CmsGenerator extends Generator
 		?string $module = null,
 		bool $withTraits = false,
 		bool $withConventions = false,
-		array $implements = [],
+		array $entityImplements = [],
+		array $repositoryImplements = [],
 		bool $isPackage = false,
 	): void
 	{
-		$this->updateModelFiles($name, $module, $withTraits, $withConventions, $implements, $isPackage);
+		$this->updateModelFiles($name, $module, $withTraits, $withConventions, $entityImplements, $repositoryImplements, $isPackage);
 	}
 
 
@@ -191,7 +192,8 @@ class CmsGenerator extends Generator
 		?string $module = null,
 		bool $withTraits = false,
 		bool $withConventions = false,
-		array $implements = [],
+		array $entityImplements = [],
+		array $repositoryImplements = [],
 		bool $isPackage = false,
 		string $mode = self::MODE_ADD,
 	): void
@@ -210,12 +212,12 @@ class CmsGenerator extends Generator
 
 		if ($withTraits || $isPackage) {
 			$entityPath = "$modelBasePath/$name/$name.php";
-			$entity = $generator->generateUpdatedEntity($entityPath, $implements);
+			$entity = $generator->generateUpdatedEntity($entityPath, $entityImplements);
 			$this->createFile($entityPath, $entity);
 			$mapperPath = "$modelBasePath/$name/{$name}Mapper.php";
 			$this->createFile($mapperPath, $generator->generateUpdatedMapper($mapperPath));
 			$repositoryPath = "$modelBasePath/$name/{$name}Repository.php";
-			$this->createFile($repositoryPath, $generator->generateUpdatedRepository($repositoryPath));
+			$this->createFile($repositoryPath, $generator->generateUpdatedRepository($repositoryPath, $repositoryImplements));
 			$dataObjectPath = "$modelBasePath/$name/{$name}Data.php";
 			$this->createFile($dataObjectPath,  $generator->generateUpdatedDataObject($dataObjectPath));
 			$dataRepositoryPath = "$modelBasePath/$name/{$name}DataRepository.php";
@@ -248,20 +250,22 @@ class CmsGenerator extends Generator
 	public function installModule(
 		string $name,
 		array $entities = [],
+		array $repositories = [],
 	): void
 	{
 		foreach ($entities as $key => $value) {
 			if (is_numeric($key)) {
 				$entityName = $value;
-				$implements = [];
+				$entityImplements = [];
 			} else {
 				$entityName = $key;
-				$implements = $value;
+				$entityImplements = $value;
 			}
 			$this->createCmsModel(
 				name: $entityName,
 				module: ucfirst($name),
-				implements: $implements,
+				entityImplements: $entityImplements,
+				repositoryImplements: $repositories[$entityName] ?? [],
 				isPackage: true,
 			);
 		}

@@ -259,7 +259,8 @@ EOT
 		return $this->modifyFile(
 			$path,
 			"$this->namespace\\$this->module{$this->name}Repository",
-			create: fn() => $this->generateCmsRepository($implements),
+			$implements,
+			fn() => $this->generateCmsRepository($implements),
 		);
 	}
 

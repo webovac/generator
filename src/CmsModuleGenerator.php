@@ -15,10 +15,10 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
+use Stepapo\Utils\DI\StepapoExtension;
 use Webovac\Core\Control\BaseControl;
 use Webovac\Core\Core;
 use Webovac\Core\DefinitionGroup;
-use Webovac\Core\DI\BaseExtension;
 use Webovac\Core\Factory;
 use Webovac\Core\MainModuleControl;
 use Webovac\Core\MigrationGroup;
@@ -33,8 +33,6 @@ class CmsModuleGenerator
 	private string $module;
 	private string $mainControl;
 	private string $mainControlInterface;
-	private string $webData;
-	private string $languageData;
 
 
 	public function __construct(
@@ -43,7 +41,6 @@ class CmsModuleGenerator
 		private readonly string $moduleNamespace,
 		private readonly bool $withMigrationGroup = false,
 		private readonly bool $withInstallGroups = false,
-		private readonly bool $withInstallFile = false,
 		private readonly string $mode = CmsGenerator::MODE_ADD,
 	) {
 		$this->lname = lcfirst($this->name);
@@ -51,8 +48,6 @@ class CmsModuleGenerator
 		$this->module = "$this->namespace\\$this->name";
 		$this->mainControl = "$this->namespace\Control\\$this->name\\{$this->name}Control";
 		$this->mainControlInterface = "$this->namespace\Control\\$this->name\I{$this->name}Control";
-		$this->webData = "$this->appNamespace\Model\Web\WebData";
-		$this->languageData = "$this->appNamespace\Model\Language\LanguageData";
 	}
 
 
@@ -329,10 +324,10 @@ EOT;
 	public function generateDIExtension(): PhpFile
 	{
 		$class = (new ClassType("{$this->name}Extension"))
-			->setExtends(BaseExtension::class);
+			->setExtends(StepapoExtension::class);
 
 		$namespace = (new PhpNamespace("$this->namespace\DI"))
-			->addUse(BaseExtension::class)
+			->addUse(StepapoExtension::class)
 			->add($class);
 
 		$file = (new PhpFile())->setStrictTypes();

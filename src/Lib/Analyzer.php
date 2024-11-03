@@ -1,0 +1,67 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Webovac\Generator\Lib;
+
+
+use Nette\Utils\Finder;
+use Webovac\Generator\Config\App;
+use Webovac\Generator\Config\Component;
+use Webovac\Generator\Config\Entity;
+use Webovac\Generator\Config\Module;
+use Webovac\Generator\Config\Service;
+
+class Analyzer
+{
+	public function getApp(string $appDir): App
+	{
+		$app = new App;
+		if (file_exists($dir = $appDir . '/Module')) {
+			foreach (Finder::findDirectories()->from($dir)->limitDepth(0) as $moduleDir) {
+				$module = new Module;
+				$module->name = $moduleDir->getFilename();
+				if (file_exists($dir = $moduleDir . '/Control')) {
+					foreach (Finder::findDirectories()->from($dir)->limitDepth(0) as $componentDir) {
+						if ($componentDir->getFilename() === $module->name) {
+							continue;
+						}
+						$component = new Component;
+						$component->name = $componentDir->getFilename();
+						$module->components[$component->name] = $component;
+					}
+				}
+				if (file_exists($dir = $moduleDir . '/Model')) {
+					foreach (Finder::findDirectories()->from($dir)->limitDepth(0) as $entityDir) {
+						$entity = new Entity;
+						$entity->name = $entityDir->getFilename();
+						$module->entities[$entity->name] = $entity;
+					}
+				}
+				if (file_exists($dir = $moduleDir . '/Lib')) {
+					foreach (Finder::findFiles('*.php')->from($dir) as $serviceFile) {
+						$service = new Service;
+						$service->name = $serviceFile->getBasename('.php');
+						$module->services[$service->name] = $service;
+					}
+				}
+				$app->modules[$module->name] = $module;
+			}
+		}
+		if (file_exists($dir = $appDir . '/Control')) {
+			foreach (Finder::findDirectories()->from($dir)->limitDepth(0) as $componentDir) {
+				$component = new Component;
+				$component->name = $componentDir->getFilename();
+				$app->components[$component->name] = $component;
+			}
+		}
+		if (file_exists($dir = $appDir . '/Lib')) {
+			foreach (Finder::findFiles('*.php')->from($dir) as $serviceFile) {
+				$service = new Service;
+				$service->name = $serviceFile->getBasename('.php');
+				$module->services[$service->name] = $service;
+			}
+		}
+		return $app;
+	}
+}

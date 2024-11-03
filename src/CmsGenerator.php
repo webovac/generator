@@ -45,7 +45,6 @@ class CmsGenerator extends Generator
 			moduleNamespace: $this->moduleNamespace,
 			withMigrationGroup: $withMigrationGroup,
 			withInstallGroups: $withInstallGroups,
-			withInstallFile: $withInstallFile,
 		);
 		$basePath = "$this->appDir/Module/$name/";
 		$lname = lcfirst($name);
@@ -302,11 +301,5 @@ class CmsGenerator extends Generator
 			$dataModelPath = "$this->appDir/Model/DataModel.php";
 			$this->createFile($dataModelPath, $generator->generateUpdatedDataModel($dataModelPath));
 		}
-	}
-
-
-	private function createFile(string $path, PhpFile|string|null $file = null): void
-	{
-		FileSystem::write($path, $file instanceof PhpFile ? (new CustomPrinter())->printFile($file) : (string) $file, mode: null);
 	}
 }

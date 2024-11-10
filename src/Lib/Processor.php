@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\Lib;
 
-
 use Stepapo\Utils\Printer;
 use Stepapo\Generator\ComponentGenerator;
 use Webovac\Core\Lib\Dataset\CmsDatasetFactory;
@@ -15,24 +14,28 @@ use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Module;
 use Webovac\Generator\Config\Service;
 
-class Processor
+
+class Processor implements \Stepapo\Utils\Service
 {
 	private int $count = 0;
 	private Printer $printer;
+	private Collector $collector;
+	private Analyzer $analyzer;
 
 
 	public function __construct(
-		private Collector $collector,
-		private Analyzer $analyzer,
 		private CmsGenerator $generator,
 	) {
 		$this->printer = new Printer;
+		$this->collector = new Collector;
+		$this->analyzer = new Analyzer;
 	}
 
 
 	public function process(array $folders, string $appDir): int
 	{
 		$start = microtime(true);
+		$this->printer->printBigSeparator();
 		$this->printer->printLine('Files', 'aqua');
 		$this->printer->printSeparator();
 		try {
@@ -134,6 +137,7 @@ class Processor
 			$module->withInstallGroups,
 			$module->withInstallFile,
 			$module->type,
+			$module->isPackage,
 		);
 		$this->count++;
 		$this->printer->printOk();
@@ -150,6 +154,9 @@ class Processor
 			$module?->name,
 			$entity->withTraits,
 			$entity->withConventions,
+			$entity->entityImplements,
+			$entity->repositoryImplements,
+			isPackage: $module?->isPackage ?: false,
 		);
 		$this->count++;
 		$this->printer->printOk();
@@ -214,7 +221,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing entity ');
 		$this->printer->printText($entity->name, 'white');
-		$this->generator->removeCmsModel($entity->name, $module->name, true);
+		$this->generator->removeCmsModel($entity->name, $module->name, $module?->isPackage ?: false);
 		$this->count++;
 		$this->printer->printOk();
 	}

@@ -37,42 +37,45 @@ class CmsGenerator extends Generator
 		bool $withInstallGroups = false,
 		bool $withInstallFile = false,
 		string $type = 'module',
+		bool $isPackage = false,
 	): void
 	{
 		$generator = new CmsModuleGenerator(
 			name: $name,
 			appNamespace: $this->appNamespace,
-			moduleNamespace: $this->moduleNamespace,
+			moduleNamespace: $isPackage ? $this->moduleNamespace : "$this->appNamespace\\Module",
 			withMigrationGroup: $withMigrationGroup,
 			withInstallGroups: $withInstallGroups,
 		);
 		$basePath = "$this->appDir/Module/$name/";
 		$lname = lcfirst($name);
 
-		$this->createFile("$basePath/$name.php", $generator->generateModule());
-		$this->createFile("$basePath/Presenter/{$name}Presenter.php", $generator->generatePresenterTrait());
-		$this->createFile("$basePath/Presenter/{$name}PresenterTemplate.php", $generator->generatePresenterTemplateTrait());
-		$this->createFile("$basePath/Control/{$name}Template.php", $generator->generateTemplateTrait());
-		$this->createFile("$basePath/Lib/{$name}TemplateFactory.php", $generator->generateTemplateFactoryTrait());
-		$this->createFile("$basePath/Control/$name/{$name}Control.php", $generator->generateMainComponent());
-		$this->createFile("$basePath/Control/$name/I{$name}Control.php", $generator->generateMainFactory());
-//		$this->createFile("$basePath/Control/$name/{$name}Template.php", $generator->generateMainTemplate());
-		$this->createFile("$basePath/Control/$name/$lname.latte", $generator->generateMainLatte());
-		if ($withModel) {
-			$this->createFile("$basePath/Model/{$name}DataModel.php", $generator->generateDataModel());
-			$this->createFile("$basePath/Model/{$name}Orm.php", $generator->generateModel());
+		if (!$isPackage) {
+			$this->createFile("$basePath/$name.php", $generator->generateModule());
+			$this->createFile("$basePath/Presenter/{$name}Presenter.php", $generator->generatePresenterTrait());
+			$this->createFile("$basePath/Presenter/{$name}PresenterTemplate.php", $generator->generatePresenterTemplateTrait());
+			$this->createFile("$basePath/Control/{$name}Template.php", $generator->generateTemplateTrait());
+			$this->createFile("$basePath/Lib/{$name}TemplateFactory.php", $generator->generateTemplateFactoryTrait());
+			$this->createFile("$basePath/Control/$name/{$name}Control.php", $generator->generateMainComponent());
+			$this->createFile("$basePath/Control/$name/I{$name}Control.php", $generator->generateMainFactory());
+//			$this->createFile("$basePath/Control/$name/{$name}Template.php", $generator->generateMainTemplate());
+			$this->createFile("$basePath/Control/$name/$lname.latte", $generator->generateMainLatte());
+			if ($withModel) {
+				$this->createFile("$basePath/Model/{$name}DataModel.php", $generator->generateDataModel());
+				$this->createFile("$basePath/Model/{$name}Orm.php", $generator->generateModel());
+			}
+			if ($withDIExtension) {
+				$this->createFile("$basePath/DI/{$name}Extension.php", $generator->generateDIExtension());
+				$this->createFile("$basePath/DI/config.neon", $generator->generateConfigNeon());
+			}
+			if ($withInstallFile) {
+				$this->createFile("$basePath/migrations/manipulations/insert.$type.$lname.neon", $generator->generateInstallNeon($type));
+			}
+			if ($withMigrationGroup) {
+				$this->createFile("$basePath/migrations/definitions/001-init.neon");
+			}
 		}
-		if ($withDIExtension) {
-			$this->createFile("$basePath/DI/{$name}Extension.php", $generator->generateDIExtension());
-			$this->createFile("$basePath/DI/config.neon", $generator->generateConfigNeon());
-		}
-		if ($withInstallFile) {
-			$this->createFile("$basePath/migrations/manipulations/insert.$type.$lname.neon", $generator->generateInstallNeon($type));
-		}
-		if ($withMigrationGroup) {
-			$this->createFile("$basePath/migrations/definitions/001-init.neon");
-		}
-		$this->updateAppFiles($name, $withModel);
+		$this->updateAppFiles($name, $withModel, isPackage: $isPackage);
 	}
 
 
@@ -91,7 +94,7 @@ class CmsGenerator extends Generator
 				$this->removeCmsModel($m[1], $name, $isPackage);
 			}
 		}
-		$this->updateAppFiles($name, mode: self::MODE_REMOVE);
+		$this->updateAppFiles($name, isPackage: $isPackage, mode: self::MODE_REMOVE);
 		$basePath = "$this->appDir/Module/$name";
 		FileSystem::delete($basePath);
 	}
@@ -162,7 +165,7 @@ class CmsGenerator extends Generator
 	public function removeCmsModel(
 		string $name,
 		?string $module = null,
-		bool $withTraits = false,
+		bool $withTraits = true,
 		bool $isPackage = false,
 	): void
 	{
@@ -175,7 +178,7 @@ class CmsGenerator extends Generator
 	public function createCmsModel(
 		string $name,
 		?string $module = null,
-		bool $withTraits = false,
+		bool $withTraits = true,
 		bool $withConventions = false,
 		array $entityImplements = [],
 		array $repositoryImplements = [],
@@ -189,7 +192,7 @@ class CmsGenerator extends Generator
 	private function updateModelFiles(
 		string $name,
 		?string $module = null,
-		bool $withTraits = false,
+		bool $withTraits = true,
 		bool $withConventions = false,
 		array $entityImplements = [],
 		array $repositoryImplements = [],
@@ -268,7 +271,7 @@ class CmsGenerator extends Generator
 				isPackage: true,
 			);
 		}
-		$this->updateAppFiles(ucfirst($name), (bool) $entities);
+		$this->updateAppFiles(ucfirst($name), (bool) $entities, isPackage: true);
 	}
 
 
@@ -278,12 +281,12 @@ class CmsGenerator extends Generator
 	}
 
 
-	private function updateAppFiles(string $name, bool $withModel = true, string $mode = self::MODE_ADD): void
+	private function updateAppFiles(string $name, bool $withModel = true, bool $isPackage = false, string $mode = self::MODE_ADD): void
 	{
 		$generator = new CmsModuleGenerator(
 			name: $name,
 			appNamespace: $this->appNamespace,
-			moduleNamespace: $this->moduleNamespace,
+			moduleNamespace: $isPackage ? $this->moduleNamespace : "$this->appNamespace\\Module",
 			mode: $mode
 		);
 		$basePresenterPath = "$this->appDir/Presenter/BasePresenter.php";

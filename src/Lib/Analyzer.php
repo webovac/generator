@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\Lib;
 
-
 use Nette\Utils\Finder;
 use Webovac\Generator\Config\App;
 use Webovac\Generator\Config\Component;
@@ -12,7 +11,8 @@ use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Module;
 use Webovac\Generator\Config\Service;
 
-class Analyzer
+
+class Analyzer implements \Stepapo\Utils\Service
 {
 	public function getApp(string $appDir): App
 	{
@@ -59,7 +59,7 @@ class Analyzer
 			foreach (Finder::findFiles('*.php')->from($dir) as $serviceFile) {
 				$service = new Service;
 				$service->name = $serviceFile->getBasename('.php');
-				$module->services[$service->name] = $service;
+				$app->services[$service->name] = $service;
 			}
 		}
 		return $app;

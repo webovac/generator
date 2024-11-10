@@ -11,11 +11,11 @@ use Nette\Schema\Expect;
 use Nette\Schema\Processor;
 use Nette\Schema\Schema;
 use Nette\Schema\ValidationException;
-use Stepapo\Definition\Lib\Collector;
-use Stepapo\Definition\Lib\MysqlAnalyzer;
-use Stepapo\Definition\Lib\MysqlProcessor;
-use Stepapo\Definition\Lib\PgsqlAnalyzer;
-use Stepapo\Definition\Lib\PgsqlProcessor;
+use Stepapo\Model\Definition\Collector;
+use Stepapo\Model\Definition\MysqlAnalyzer;
+use Stepapo\Model\Definition\MysqlProcessor;
+use Stepapo\Model\Definition\PgsqlAnalyzer;
+use Stepapo\Model\Definition\PgsqlProcessor;
 use Stepapo\Utils\DI\StepapoExtension;
 
 

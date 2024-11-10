@@ -20,8 +20,9 @@ use Nextras\Orm\Collection\ICollection;
 use Nextras\Orm\Mapper\Dbal\Conventions\IConventions;
 use Nextras\Orm\StorageReflection\StringHelper;
 use Stepapo\Generator\ModelGenerator;
-use Stepapo\Utils\Model\Collection;
-use Stepapo\Utils\Model\Item;
+use Stepapo\Model\Data\Collection;
+use Stepapo\Model\Data\Item;
+use Tracy\Dumper;
 use Webovac\Core\Model\CmsDataRepository;
 use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Model\CmsMapper;
@@ -41,7 +42,7 @@ class CmsModelGenerator extends ModelGenerator
 		private string $appNamespace,
 		private string $moduleNamespace,
 		private ?string $module = null,
-		private bool $withTraits = false,
+		private bool $withTraits = true,
 		private bool $withConventions = false,
 		private string $mode = CmsGenerator::MODE_ADD,
 	) {
@@ -71,17 +72,6 @@ class CmsModelGenerator extends ModelGenerator
 			$trait = "$this->namespace\\$this->module$this->name";
 			$class->addTrait($trait);
 			$namespace->addUse($trait);
-		} else {
-			$class
-				->addComment("@property int \$id {primary}")
-				->addComment("@property DateTimeImmutable \$createdAt {default now}")
-				->addComment("@property DateTimeImmutable|null \$updatedAt")
-				->addComment("@property Person|null \$createdByPerson {m:1 Person, oneSided=true}")
-				->addComment("@property Person|null \$updatedByPerson {m:1 Person, oneSided=true}");
-			$namespace->addUse(DateTimeImmutable::class);
-			if ($this->name !== 'Person') {
-				$namespace->addUse("$this->appNamespace\Model\Person\Person");
-			}
 		}
 		foreach ($implements as $implement) {
 			$class->addImplement($implement);
@@ -106,12 +96,7 @@ class CmsModelGenerator extends ModelGenerator
 
 	public function generateEntityTrait(): PhpFile
 	{
-		$class = ($this->withTraits ? new TraitType("$this->module$this->name") : new ClassType($this->name))
-			->addComment("@property int \$id {primary}")
-			->addComment("@property DateTimeImmutable \$createdAt {default now}")
-			->addComment("@property DateTimeImmutable|null \$updatedAt")
-			->addComment("@property Person|null \$createdByPerson {m:1 Person, oneSided=true}")
-			->addComment("@property Person|null \$updatedByPerson {m:1 Person, oneSided=true}");
+		$class = ($this->withTraits ? new TraitType("$this->module$this->name") : new ClassType($this->name));
 
 		$namespace = (new PhpNamespace($this->namespace))
 			->add($class)
@@ -482,8 +467,9 @@ EOT
 			$class->removeTrait($trait);
 			$namespace->removeUse($trait);
 		}
+		$alreadyImplements = $class->getImplements();
 		foreach ($implements as $implement) {
-			if (array_key_exists($implement, $class->getImplements())) {
+			if (in_array($implement, $alreadyImplements, true)) {
 				continue;
 			}
 			$class->addImplement($implement);

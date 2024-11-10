@@ -9,6 +9,8 @@ use Stepapo\Utils\Schematic;
 class Entity extends Schematic
 {
 	#[KeyProperty] public string $name;
-	public bool $withTraits = false;
+	public bool $withTraits = true;
 	public bool $withConventions = false;
+	public array $entityImplements = [];
+	public array $repositoryImplements = [];
 }

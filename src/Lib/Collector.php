@@ -7,10 +7,12 @@ namespace Webovac\Generator\Lib;
 use Nette\InvalidArgumentException;
 use Nette\Utils\FileInfo;
 use Nette\Utils\Finder;
+use Stepapo\Utils\Service;
+use Tracy\Dumper;
 use Webovac\Generator\Config\App;
 
 
-class Collector
+class Collector implements Service
 {
 	public function getApp(array $folders): App
 	{
@@ -41,6 +43,7 @@ class Collector
 			foreach ($app->modules as $module) {
 				if (!isset($mergedApp->modules[$module->name])) {
 					$mergedApp->modules[$module->name] = $module;
+					continue;
 				}
 				foreach ($module->components as $component) {
 					if (isset($mergedApp->modules[$module->name]->components[$component->name])) {
@@ -49,6 +52,7 @@ class Collector
 					$mergedApp->modules[$module->name]->components[$component->name] = $component;
 				}
 				foreach ($module->entities as $entity) {
+					Dumper::dump('Entity: ' . $entity->name);
 					if (isset($mergedApp->modules[$module->name]->entities[$entity->name])) {
 						throw new InvalidArgumentException("Duplicate definition of entity '$entity->name' in module '$module->name'.");
 					}

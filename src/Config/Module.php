@@ -12,6 +12,7 @@ class Module extends Schematic
 	#[KeyProperty] public string $name;
 	public string $namespace = 'App\Module';
 	public string $type = 'module';
+	public bool $isPackage = false;
 	public bool $withDIExtension = false;
 	public bool $withMigrationGroup = false;
 	public bool $withInstallGroups = false;

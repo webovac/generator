@@ -19,7 +19,7 @@ use Stepapo\Utils\DI\StepapoExtension;
 use Webovac\Core\Control\BaseControl;
 use Webovac\Core\Core;
 use Webovac\Core\DefinitionGroup;
-use Webovac\Core\Factory;
+use Stepapo\Utils\Factory;
 use Webovac\Core\MainModuleControl;
 use Webovac\Core\MigrationGroup;
 use Webovac\Core\Model\CmsEntity;

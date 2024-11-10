@@ -15,7 +15,7 @@ use Webovac\Generator\Config\Module;
 use Webovac\Generator\Config\Service;
 
 
-class Processor implements \Stepapo\Utils\Service
+class Processor
 {
 	private int $count = 0;
 	private Printer $printer;
@@ -199,7 +199,7 @@ class Processor implements \Stepapo\Utils\Service
 	{
 		$this->printer->printText($module->name, 'white');
 		$this->printer->printText(': removing module ');
-		$this->generator->removeModule($module->name);
+		$this->generator->removeModule($module->name, $module->isPackage);
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -221,7 +221,7 @@ class Processor implements \Stepapo\Utils\Service
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing entity ');
 		$this->printer->printText($entity->name, 'white');
-		$this->generator->removeCmsModel($entity->name, $module->name, $module?->isPackage ?: false);
+		$this->generator->removeCmsModel($entity->name, $module?->name, $module?->isPackage ?: false);
 		$this->count++;
 		$this->printer->printOk();
 	}

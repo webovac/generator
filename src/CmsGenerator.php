@@ -142,7 +142,6 @@ class CmsGenerator extends Generator
 		string $name,
 		?string $module = null,
 		?string $entityName = null,
-		bool $isPackage = false,
 	): void
 	{
 		$generator = new CmsComponentGenerator(

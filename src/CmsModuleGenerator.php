@@ -16,12 +16,13 @@ use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
 use Stepapo\Utils\DI\StepapoExtension;
+use Tracy\Dumper;
 use Webovac\Core\Control\BaseControl;
 use Webovac\Core\Core;
-use Webovac\Core\DefinitionGroup;
+use Stepapo\Model\Definition\DefinitionGroup;
 use Stepapo\Utils\Factory;
 use Webovac\Core\MainModuleControl;
-use Webovac\Core\MigrationGroup;
+use Stepapo\Model\MigrationGroup;
 use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Module;
 

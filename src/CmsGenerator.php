@@ -92,7 +92,7 @@ class CmsGenerator extends Generator
 				if (!isset($m[1])) {
 					continue;
 				}
-				$this->removeCmsModel($m[1], $name, $isPackage);
+				$this->removeCmsModel($m[1], $name, $isPackage, $moduleNamespace);
 			}
 		}
 		$this->updateAppFiles($name, isPackage: $isPackage, mode: self::MODE_REMOVE, moduleNamespace: $moduleNamespace);
@@ -167,9 +167,10 @@ class CmsGenerator extends Generator
 		?string $module = null,
 		bool $withTraits = true,
 		bool $isPackage = false,
+		?string $moduleNamespace = null
 	): void
 	{
-		$this->updateModelFiles($name, $module, withTraits: $withTraits, isPackage: $isPackage, mode: self::MODE_REMOVE);
+		$this->updateModelFiles($name, $module, withTraits: $withTraits, isPackage: $isPackage, moduleNamespace: $moduleNamespace, mode: self::MODE_REMOVE);
 		$basePath = "$this->appDir/" . ($module ? "Module/$module/" : '') . "Model/$name";
 		FileSystem::delete($basePath);
 	}
@@ -183,9 +184,10 @@ class CmsGenerator extends Generator
 		array $entityImplements = [],
 		array $repositoryImplements = [],
 		bool $isPackage = false,
+		?string $moduleNamespace = null,
 	): void
 	{
-		$this->updateModelFiles($name, $module, $withTraits, $withConventions, $entityImplements, $repositoryImplements, $isPackage);
+		$this->updateModelFiles($name, $module, $withTraits, $withConventions, $entityImplements, $repositoryImplements, $isPackage, $moduleNamespace);
 	}
 
 
@@ -197,13 +199,14 @@ class CmsGenerator extends Generator
 		array $entityImplements = [],
 		array $repositoryImplements = [],
 		bool $isPackage = false,
+		?string $moduleNamespace = null,
 		string $mode = self::MODE_ADD,
 	): void
 	{
 		$generator = new CmsModelGenerator(
 			name: $name,
 			appNamespace: $this->appNamespace,
-			moduleNamespace: $this->moduleNamespace,
+			moduleNamespace: $moduleNamespace,
 			module: $module,
 			withTraits: $withTraits,
 			withConventions: $withConventions,

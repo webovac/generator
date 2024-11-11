@@ -40,7 +40,7 @@ class CmsModelGenerator extends ModelGenerator
 	public function __construct(
 		private string $name,
 		private string $appNamespace,
-		private string $moduleNamespace,
+		private ?string $moduleNamespace = null,
 		private ?string $module = null,
 		private bool $withTraits = true,
 		private bool $withConventions = false,

@@ -138,6 +138,7 @@ class Processor
 			$module->withInstallFile,
 			$module->type,
 			$module->isPackage,
+			$module->namespace,
 		);
 		$this->count++;
 		$this->printer->printOk();

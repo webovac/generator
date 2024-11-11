@@ -38,12 +38,13 @@ class CmsGenerator extends Generator
 		bool $withInstallFile = false,
 		string $type = 'module',
 		bool $isPackage = false,
+		string $moduleNamespace = 'App\Module',
 	): void
 	{
 		$generator = new CmsModuleGenerator(
 			name: $name,
 			appNamespace: $this->appNamespace,
-			moduleNamespace: $isPackage ? $this->moduleNamespace : "$this->appNamespace\\Module",
+			moduleNamespace: $isPackage ? $moduleNamespace : "$this->appNamespace\\Module",
 			withMigrationGroup: $withMigrationGroup,
 			withInstallGroups: $withInstallGroups,
 		);

@@ -158,6 +158,7 @@ class Processor
 			$entity->entityImplements,
 			$entity->repositoryImplements,
 			isPackage: $module?->isPackage ?: false,
+			moduleNamespace: $module?->namespace,
 		);
 		$this->count++;
 		$this->printer->printOk();

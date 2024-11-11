@@ -38,7 +38,7 @@ class CmsGenerator extends Generator
 		bool $withInstallFile = false,
 		string $type = 'module',
 		bool $isPackage = false,
-		string $moduleNamespace = 'Webovac',
+		string $moduleNamespace = "App\\Module",
 	): void
 	{
 		$generator = new CmsModuleGenerator(
@@ -76,11 +76,11 @@ class CmsGenerator extends Generator
 				$this->createFile("$basePath/migrations/definitions/001-init.neon");
 			}
 		}
-		$this->updateAppFiles($name, $withModel, isPackage: $isPackage);
+		$this->updateAppFiles($name, $withModel, isPackage: $isPackage, moduleNamespace: $moduleNamespace);
 	}
 
 
-	public function removeModule(string $name, bool $isPackage = false): void
+	public function removeModule(string $name, bool $isPackage = false, string $moduleNamespace = "App\\Module"): void
 	{
 		$basePath = "$this->appDir/Module/$name/";
 		$modelPath = "$basePath/Model/{$name}Orm.php";
@@ -95,7 +95,7 @@ class CmsGenerator extends Generator
 				$this->removeCmsModel($m[1], $name, $isPackage);
 			}
 		}
-		$this->updateAppFiles($name, isPackage: $isPackage, mode: self::MODE_REMOVE);
+		$this->updateAppFiles($name, isPackage: $isPackage, mode: self::MODE_REMOVE, moduleNamespace: $moduleNamespace);
 		$basePath = "$this->appDir/Module/$name";
 		FileSystem::delete($basePath);
 	}
@@ -281,12 +281,12 @@ class CmsGenerator extends Generator
 	}
 
 
-	private function updateAppFiles(string $name, bool $withModel = true, bool $isPackage = false, string $mode = self::MODE_ADD): void
+	private function updateAppFiles(string $name, bool $withModel = true, bool $isPackage = false, string $mode = self::MODE_ADD, string $moduleNamespace = "App\\Module"): void
 	{
 		$generator = new CmsModuleGenerator(
 			name: $name,
 			appNamespace: $this->appNamespace,
-			moduleNamespace: $isPackage ? $this->moduleNamespace : "$this->appNamespace\\Module",
+			moduleNamespace: $isPackage ? $moduleNamespace : "$this->appNamespace\\Module",
 			mode: $mode
 		);
 		$basePresenterPath = "$this->appDir/Presenter/BasePresenter.php";

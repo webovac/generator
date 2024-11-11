@@ -20,15 +20,6 @@ class CmsGenerator extends Generator
 	public const string MODE_REMOVE = 'remove';
 
 
-	public function __construct(
-		protected string $appNamespace = 'App',
-		protected string $appDir = 'app',
-		protected string $moduleNamespace = 'Webovac',
-	) {
-		parent::__construct($appNamespace, $appDir);
-	}
-
-
 	public function createModule(
 		string $name,
 		bool $withModel = false,
@@ -45,8 +36,8 @@ class CmsGenerator extends Generator
 			name: $name,
 			appNamespace: $this->appNamespace,
 			moduleNamespace: $isPackage ? $moduleNamespace : "$this->appNamespace\\Module",
-			withMigrationGroup: $withMigrationGroup,
-			withInstallGroups: $withInstallGroups,
+			withDefinitionGroup: $withMigrationGroup,
+			withManipulationGroup: $withInstallGroups,
 		);
 		$basePath = "$this->appDir/Module/$name/";
 		$lname = lcfirst($name);
@@ -92,7 +83,7 @@ class CmsGenerator extends Generator
 				if (!isset($m[1])) {
 					continue;
 				}
-				$this->removeCmsModel($m[1], $name, $isPackage, $moduleNamespace);
+				$this->removeCmsModel($m[1], $name, isPackage: $isPackage, moduleNamespace: $moduleNamespace);
 			}
 		}
 		$this->updateAppFiles($name, isPackage: $isPackage, mode: self::MODE_REMOVE, moduleNamespace: $moduleNamespace);
@@ -249,38 +240,6 @@ class CmsGenerator extends Generator
 //		$this->createFile($dataModelPath, $generator->generateUpdatedDataModel($dataModelPath));
 //		$modelPath = "$basePath/{$module}Orm.php";
 //		$this->createFile($modelPath, $generator->generateUpdatedModel($modelPath));
-	}
-
-
-	public function installModule(
-		string $name,
-		array $entities = [],
-		array $repositories = [],
-	): void
-	{
-		foreach ($entities as $key => $value) {
-			if (is_numeric($key)) {
-				$entityName = $value;
-				$entityImplements = [];
-			} else {
-				$entityName = $key;
-				$entityImplements = $value;
-			}
-			$this->createCmsModel(
-				name: $entityName,
-				module: ucfirst($name),
-				entityImplements: $entityImplements,
-				repositoryImplements: $repositories[$entityName] ?? [],
-				isPackage: true,
-			);
-		}
-		$this->updateAppFiles(ucfirst($name), (bool) $entities, isPackage: true);
-	}
-
-
-	public function uninstallModule(string $name): void
-	{
-		$this->removeModule($name, isPackage: true);
 	}
 
 

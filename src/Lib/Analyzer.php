@@ -74,6 +74,19 @@ class Analyzer implements \Stepapo\Utils\Service
 					$module = new Module;
 					$module->name = $moduleName;
 					$module->isPackage = true;
+					foreach (Finder::findFiles('*Mapper.php')->from($appDir . '/Model') as $repositoryFile) {
+						$f = PhpFile::fromCode(file_get_contents($repositoryFile->getPathname()));
+						$c = Arrays::first($f->getClasses());
+						foreach ($c->getTraits() as $t) {
+							$n = Arrays::last(explode('\\', $t->getName()));
+							preg_match("/$module->name(.+)Mapper/", $n, $m);
+							if (isset($m[1])) {
+								$entity = new Entity;
+								$entity->name = $m[1];
+								$module->entities[$entity->name] = $entity;
+							}
+						}
+					}
 					$app->modules[$module->name] = $module;
 				}
 			}

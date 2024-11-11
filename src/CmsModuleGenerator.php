@@ -15,6 +15,7 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
+use Stepapo\Model\Manipulation\ManipulationGroup;
 use Stepapo\Utils\DI\StepapoExtension;
 use Tracy\Dumper;
 use Webovac\Core\Control\BaseControl;
@@ -40,8 +41,8 @@ class CmsModuleGenerator
 		private readonly string $name,
 		private readonly string $appNamespace,
 		private readonly string $moduleNamespace,
-		private readonly bool $withMigrationGroup = false,
-		private readonly bool $withInstallGroups = false,
+		private readonly bool $withDefinitionGroup = false,
+		private readonly bool $withManipulationGroup = false,
 		private readonly string $mode = CmsGenerator::MODE_ADD,
 	) {
 		$this->lname = lcfirst($this->name);
@@ -75,7 +76,7 @@ class CmsModuleGenerator
 			->addUse(Module::class)
 			->add($class);
 
-		if ($this->withMigrationGroup) {
+		if ($this->withDefinitionGroup) {
 			$getDefinitionGroupMethod = (new Method('getDefinitionGroup'))
 				->setPublic()
 				->setReturnType(MigrationGroup::class)
@@ -87,17 +88,17 @@ EOT);
 			$namespace->addUse(Core::class);
 		}
 
-		if ($this->withInstallGroups) {
+		if ($this->withManipulationGroup) {
 			$getManipulationGroups = (new Method('getManipulationGroups'))
 				->setPublic()
 				->setReturnType('array')
 				->setBody(<<<EOT
 return [
-	new InstallGroup('', '', []),
+	'' => new ManipulationGroup('', '', []),
 ];
 EOT);
 			$class->addMember($getManipulationGroups);
-			$namespace->addUse(MigrationGroup::class);
+			$namespace->addUse(ManipulationGroup::class);
 		}
 
 		$file = (new PhpFile())->setStrictTypes();

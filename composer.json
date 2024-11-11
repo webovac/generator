@@ -16,7 +16,7 @@
 	},
 	"require": {
 		"php": ">=8.1",
-		"stepapo/generator": "^0.1"
+		"stepapo/generator": "dev-main"
 	},
 	"autoload": {
 		"psr-4": {

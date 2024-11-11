@@ -38,7 +38,7 @@ class CmsGenerator extends Generator
 		bool $withInstallFile = false,
 		string $type = 'module',
 		bool $isPackage = false,
-		string $moduleNamespace = 'App\Module',
+		string $moduleNamespace = 'Webovac',
 	): void
 	{
 		$generator = new CmsModuleGenerator(

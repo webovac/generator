@@ -79,7 +79,7 @@ class Analyzer implements \Stepapo\Utils\Service
 						$c = Arrays::first($f->getClasses());
 						foreach ($c->getTraits() as $t) {
 							$n = Arrays::last(explode('\\', $t->getName()));
-							preg_match("/$module->name(.+)Mapper/", $n, $m);
+							preg_match("/^$module->name(.+)Mapper$/", $n, $m);
 							if (isset($m[1])) {
 								$entity = new Entity;
 								$entity->name = $m[1];

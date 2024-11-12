@@ -52,7 +52,6 @@ class Collector implements Service
 					$mergedApp->modules[$module->name]->components[$component->name] = $component;
 				}
 				foreach ($module->entities as $entity) {
-					Dumper::dump('Entity: ' . $entity->name);
 					if (isset($mergedApp->modules[$module->name]->entities[$entity->name])) {
 						throw new InvalidArgumentException("Duplicate definition of entity '$entity->name' in module '$module->name'.");
 					}

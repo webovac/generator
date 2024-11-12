@@ -7,7 +7,6 @@ namespace Webovac\Generator\Lib;
 use Nette\PhpGenerator\PhpFile;
 use Nette\Utils\Arrays;
 use Nette\Utils\Finder;
-use Tracy\Dumper;
 use Webovac\Generator\Config\App;
 use Webovac\Generator\Config\Component;
 use Webovac\Generator\Config\Entity;

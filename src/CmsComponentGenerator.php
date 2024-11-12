@@ -14,8 +14,8 @@ use Nette\Utils\ArrayHash;
 use Nette\Utils\Arrays;
 use Stepapo\Dataset\Control\Dataset\DatasetControl;
 use Stepapo\Generator\ComponentGenerator;
-use Webovac\Core\Attribute\RequiresEntity;
 use Stepapo\Utils\Factory;
+use Webovac\Core\Attribute\RequiresEntity;
 
 
 class CmsComponentGenerator extends ComponentGenerator

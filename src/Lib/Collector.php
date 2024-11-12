@@ -8,7 +8,6 @@ use Nette\InvalidArgumentException;
 use Nette\Utils\FileInfo;
 use Nette\Utils\Finder;
 use Stepapo\Utils\Service;
-use Tracy\Dumper;
 use Webovac\Generator\Config\App;
 
 

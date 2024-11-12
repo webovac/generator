@@ -22,7 +22,6 @@ use Nextras\Orm\StorageReflection\StringHelper;
 use Stepapo\Generator\ModelGenerator;
 use Stepapo\Model\Data\Collection;
 use Stepapo\Model\Data\Item;
-use Tracy\Dumper;
 use Webovac\Core\Model\CmsDataRepository;
 use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Model\CmsMapper;

@@ -15,15 +15,14 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
+use Stepapo\Model\Definition\DefinitionGroup;
 use Stepapo\Model\Manipulation\ManipulationGroup;
+use Stepapo\Model\MigrationGroup;
 use Stepapo\Utils\DI\StepapoExtension;
-use Tracy\Dumper;
+use Stepapo\Utils\Factory;
 use Webovac\Core\Control\BaseControl;
 use Webovac\Core\Core;
-use Stepapo\Model\Definition\DefinitionGroup;
-use Stepapo\Utils\Factory;
 use Webovac\Core\MainModuleControl;
-use Stepapo\Model\MigrationGroup;
 use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Module;
 

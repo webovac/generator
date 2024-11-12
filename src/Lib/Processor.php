@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\Lib;
 
-use Stepapo\Utils\Printer;
 use Stepapo\Generator\ComponentGenerator;
+use Stepapo\Utils\Printer;
 use Webovac\Core\Lib\Dataset\CmsDatasetFactory;
 use Webovac\Generator\CmsGenerator;
 use Webovac\Generator\Config\App;

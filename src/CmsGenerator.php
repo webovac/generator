@@ -9,7 +9,6 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\Utils\Arrays;
 use Nette\Utils\FileSystem;
 use Stepapo\Generator\ComponentGenerator;
-use Stepapo\Generator\CustomPrinter;
 use Stepapo\Generator\Generator;
 use Webovac\Core\Control\BaseControl;
 

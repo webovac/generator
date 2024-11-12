@@ -7,11 +7,10 @@ namespace Webovac\Generator\Lib;
 use Nette\InvalidArgumentException;
 use Nette\Utils\FileInfo;
 use Nette\Utils\Finder;
-use Stepapo\Utils\Service;
 use Webovac\Generator\Config\App;
 
 
-class Collector implements Service
+class Collector
 {
 	public function getApp(array $folders): App
 	{

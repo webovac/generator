@@ -14,7 +14,7 @@ use Webovac\Generator\Config\Module;
 use Webovac\Generator\Config\Service;
 
 
-class Analyzer implements \Stepapo\Utils\Service
+class Analyzer
 {
 	public function getApp(string $appDir): App
 	{

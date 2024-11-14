@@ -497,6 +497,9 @@ EOT
 				}
 			}
 		}
+		$sortedImplements = $class->getImplements();
+		sort($sortedImplements);
+		$class->setImplements($sortedImplements);
 		return $file;
 	}
 

@@ -26,6 +26,7 @@ use Webovac\Core\Model\CmsDataRepository;
 use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Model\CmsMapper;
 use Webovac\Core\Model\CmsRepository;
+use Webovac\Generator\Config\Implement;
 
 
 class CmsModelGenerator extends ModelGenerator
@@ -73,8 +74,8 @@ class CmsModelGenerator extends ModelGenerator
 			$namespace->addUse($trait);
 		}
 		foreach ($implements as $implement) {
-			$class->addImplement($implement);
-			$namespace->addUse($implement);
+			$class->addImplement($implement->class);
+			$namespace->addUse($implement->class);
 		}
 		$file = (new PhpFile())->setStrictTypes();
 		$file->addNamespace($namespace);
@@ -228,8 +229,8 @@ EOT
 			$namespace->addUse($trait);
 		}
 		foreach ($implements as $implement) {
-			$class->addImplement($implement);
-			$namespace->addUse($implement);
+			$class->addImplement($implement->class);
+			$namespace->addUse($implement->class);
 		}
 		$file = (new PhpFile())->setStrictTypes();
 		$file->addNamespace($namespace);
@@ -467,12 +468,18 @@ EOT
 			$namespace->removeUse($trait);
 		}
 		$alreadyImplements = $class->getImplements();
+		$implementClasses = array_map(fn(Implement $i) => $i->class, $implements);
 		foreach ($implements as $implement) {
-			if (in_array($implement, $alreadyImplements, true)) {
+			foreach ($implement->requires as $require) {
+				if (!in_array($require, $implementClasses, true)) {
+					continue 2;
+				}
+			}
+			if (in_array($implement->class, $alreadyImplements, true)) {
 				continue;
 			}
-			$class->addImplement($implement);
-			$namespace->addUse($implement);
+			$class->addImplement($implement->class);
+			$namespace->addUse($implement->class);
 		}
 		return $file;
 	}

@@ -201,7 +201,7 @@ class Processor
 	{
 		$this->printer->printText($module->name, 'white');
 		$this->printer->printText(': removing module ');
-		$this->generator->removeModule($module->name, $module->isPackage);
+		$this->generator->removeModule($module->name, $module->isPackage, $module->namespace);
 		$this->count++;
 		$this->printer->printOk();
 	}

@@ -7,6 +7,7 @@ namespace Webovac\Generator\Lib;
 use Nette\PhpGenerator\PhpFile;
 use Nette\Utils\Arrays;
 use Nette\Utils\Finder;
+use Tracy\Dumper;
 use Webovac\Generator\Config\App;
 use Webovac\Generator\Config\Component;
 use Webovac\Generator\Config\Entity;
@@ -68,10 +69,13 @@ class Analyzer
 			$file = PhpFile::fromCode(file_get_contents($path));
 			$class = Arrays::first($file->getClasses());
 			foreach ($class->getTraits() as $trait) {
-				$moduleName = str_replace('Presenter', '', Arrays::last(explode('\\', $trait->getName())));
-				if (!isset($app->modules[$moduleName])) {
+				preg_match('/^(.+)\\\(.+)\\\Presenter\\\(.+)Presenter$/', $trait->getName(), $m);
+				$namespace = $m[1] ?? null;
+				$moduleName = $m[2] ?? null;
+				if ($moduleName && $namespace && !isset($app->modules[$moduleName])) {
 					$module = new Module;
 					$module->name = $moduleName;
+					$module->namespace = $m[1];
 					$module->isPackage = true;
 					foreach (Finder::findFiles('*Mapper.php')->from($appDir . '/Model') as $repositoryFile) {
 						$f = PhpFile::fromCode(file_get_contents($repositoryFile->getPathname()));

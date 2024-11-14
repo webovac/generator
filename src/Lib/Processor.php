@@ -122,6 +122,12 @@ class Processor
 				$this->removeComponent($component);
 			}
 		}
+		# CHECK IMPLEMENTS
+		foreach ($new->modules as $module) {
+			foreach ($module->entities as $entity) {
+				$this->generator->checkCmsModel($entity, $module);
+			}
+		}
 	}
 
 

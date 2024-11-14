@@ -468,18 +468,34 @@ EOT
 			$namespace->removeUse($trait);
 		}
 		$alreadyImplements = $class->getImplements();
-		$implementClasses = array_map(fn(Implement $i) => $i->class, $implements);
 		foreach ($implements as $implement) {
-			foreach ($implement->requires as $require) {
-				if (!in_array($require, $implementClasses, true)) {
-					continue 2;
-				}
-			}
 			if (in_array($implement->class, $alreadyImplements, true)) {
 				continue;
 			}
 			$class->addImplement($implement->class);
 			$namespace->addUse($implement->class);
+		}
+		return $file;
+	}
+
+
+	/** @param Implement[] $implements */
+	public function checkFileImplements(string $path, array $implements = []): PhpFile
+	{
+		if (!($content = @file_get_contents($path))) {
+			throw new InvalidArgumentException("Model with name '$this->name' does not exist.");
+		}
+		$file = PhpFile::fromCode($content);
+		$class = Arrays::first($file->getClasses());
+		$namespace = Arrays::first($file->getNamespaces());
+		$alreadyImplements = $class->getImplements();
+		foreach ($implements as $implement) {
+			foreach ($implement->requires as $require) {
+				if (!in_array($require, $alreadyImplements, true)) {
+					$class->removeImplement($implement->class);
+					$namespace->removeUse($implement->class);
+				}
+			}
 		}
 		return $file;
 	}

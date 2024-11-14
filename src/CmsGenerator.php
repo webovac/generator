@@ -11,6 +11,8 @@ use Nette\Utils\FileSystem;
 use Stepapo\Generator\ComponentGenerator;
 use Stepapo\Generator\Generator;
 use Webovac\Core\Control\BaseControl;
+use Webovac\Generator\Config\Entity;
+use Webovac\Generator\Config\Module;
 
 
 class CmsGenerator extends Generator
@@ -178,6 +180,27 @@ class CmsGenerator extends Generator
 	): void
 	{
 		$this->updateModelFiles($name, $module, $withTraits, $withConventions, $entityImplements, $repositoryImplements, $isPackage, $moduleNamespace);
+	}
+
+
+	public function checkCmsModel(
+		Entity $entity,
+		?Module $module = null,
+	): void
+	{
+		$generator = new CmsModelGenerator(
+			name: $entity->name,
+			appNamespace: $this->appNamespace,
+			moduleNamespace: $module->namespace,
+			module: $module->name,
+			withTraits: $entity->withTraits,
+			withConventions: $entity->withConventions,
+		);
+		$modelBasePath = "$this->appDir/Model";
+		$entityPath = "$modelBasePath/$entity->name/$entity->name.php";
+		$this->createFile($entityPath, $generator->checkFileImplements($entityPath, $entity->entityImplements));
+		$repositoryPath = "$modelBasePath/$entity->name/{$entity->name}Repository.php";
+		$this->createFile($repositoryPath, $generator->checkFileImplements($repositoryPath, $entity->repositoryImplements));
 	}
 
 

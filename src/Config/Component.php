@@ -11,5 +11,5 @@ class Component extends Schematic
 	#[KeyProperty] public string $name;
 	public ?string $entityName = null;
 	public bool $withTemplateName = false;
-	public string $type;
+	public ?string $type = null;
 }

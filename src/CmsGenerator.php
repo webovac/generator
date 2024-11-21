@@ -196,7 +196,7 @@ class CmsGenerator extends Generator
 			withTraits: $entity->withTraits,
 			withConventions: $entity->withConventions,
 		);
-		$modelBasePath = "$this->appDir/Model";
+		$modelBasePath = "$this->appDir/" . ($module && !$entity->withTraits ? "Module/$module->name/" : '') . "Model";
 		$entityPath = "$modelBasePath/$entity->name/$entity->name.php";
 		$this->createFile($entityPath, $generator->checkFileImplements($entityPath, $entity->entityImplements));
 		$repositoryPath = "$modelBasePath/$entity->name/{$entity->name}Repository.php";

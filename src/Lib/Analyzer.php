@@ -9,6 +9,7 @@ use Nette\Utils\Arrays;
 use Nette\Utils\Finder;
 use Tracy\Dumper;
 use Webovac\Generator\Config\App;
+use Webovac\Generator\Config\Command;
 use Webovac\Generator\Config\Component;
 use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Module;
@@ -48,6 +49,13 @@ class Analyzer
 						$module->services[$service->name] = $service;
 					}
 				}
+				if (file_exists($dir = $moduleDir . '/Command')) {
+					foreach (Finder::findFiles('*.php')->from($dir) as $commandFile) {
+						$command = new Command;
+						$command->name = $commandFile->getBasename('.php');
+						$module->commands[$command->name] = $service;
+					}
+				}
 				$app->modules[$module->name] = $module;
 			}
 		}
@@ -63,6 +71,13 @@ class Analyzer
 				$service = new Service;
 				$service->name = $serviceFile->getBasename('.php');
 				$app->services[$service->name] = $service;
+			}
+		}
+		if (file_exists($dir = $appDir . '/Command')) {
+			foreach (Finder::findFiles('*.php')->from($dir) as $commandFile) {
+				$command = new Command;
+				$command->name = $commandFile->getBasename('.php');
+				$app->commands[$command->name] = $service;
 			}
 		}
 		if (file_exists($path = $appDir . '/Presenter/BasePresenter.php')) {

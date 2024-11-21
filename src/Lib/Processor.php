@@ -127,10 +127,32 @@ class Processor
 					$this->removeEntity($entity, $module);
 				}
 			}
+//			Zakomentováno kvůli module trait TemplateFactory a dalším servicám v app
+//			foreach ($module->services as $service) {
+//				if (!isset($new->modules[$module->name]->services[$service->name])) {
+//					$this->removeService($service, $module);
+//				}
+//			}
+			foreach ($module->commands as $command) {
+				if (!isset($new->modules[$module->name]->commands[$command->name])) {
+					$this->removeCommand($command, $module);
+				}
+			}
 		}
 		foreach ($old->components as $component) {
 			if (!isset($new->components[$component->name])) {
 				$this->removeComponent($component);
+			}
+		}
+//		Zakomentováno kvůli module trait TemplateFactory a dalším servicám v app
+//		foreach ($old->services as $service) {
+//			if (!isset($new->services[$service->name])) {
+//				$this->removeService($service);
+//			}
+//		}
+		foreach ($old->commands as $command) {
+			if (!isset($new->commands[$command->name])) {
+				$this->removeCommand($command);
 			}
 		}
 		# CHECK IMPLEMENTS
@@ -241,6 +263,17 @@ class Processor
 		$this->printer->printText(': removing component ');
 		$this->printer->printText($component->name, 'white');
 		$this->generator->removeCmsComponent($component->name, $module?->name);
+		$this->count++;
+		$this->printer->printOk();
+	}
+
+
+	private function removeService(Service $service, ?Module $module = null)
+	{
+		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
+		$this->printer->printText(': removing service ');
+		$this->printer->printText($service->name, 'white');
+		$this->generator->removeService($service->name, $module?->name);
 		$this->count++;
 		$this->printer->printOk();
 	}

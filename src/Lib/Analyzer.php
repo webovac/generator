@@ -53,7 +53,7 @@ class Analyzer
 					foreach (Finder::findFiles('*.php')->from($dir) as $commandFile) {
 						$command = new Command;
 						$command->name = $commandFile->getBasename('.php');
-						$module->commands[$command->name] = $service;
+						$module->commands[$command->name] = $command;
 					}
 				}
 				$app->modules[$module->name] = $module;
@@ -77,7 +77,7 @@ class Analyzer
 			foreach (Finder::findFiles('*.php')->from($dir) as $commandFile) {
 				$command = new Command;
 				$command->name = $commandFile->getBasename('.php');
-				$app->commands[$command->name] = $service;
+				$app->commands[$command->name] = $command;
 			}
 		}
 		if (file_exists($path = $appDir . '/Presenter/BasePresenter.php')) {

@@ -61,6 +61,12 @@ class Collector
 					}
 					$mergedApp->modules[$module->name]->services[$service->name] = $service;
 				}
+				foreach ($module->commands as $command) {
+					if (isset($mergedApp->modules[$module->name]->commands[$command->name])) {
+						throw new InvalidArgumentException("Duplicate definition of command '$command->name' in module '$module->name'.");
+					}
+					$mergedApp->modules[$module->name]->commands[$command->name] = $command;
+				}
 			}
 			foreach ($app->components as $component) {
 				if (isset($mergedApp->components[$component->name])) {
@@ -79,6 +85,12 @@ class Collector
 					throw new InvalidArgumentException("Duplicate definition of service '$service->name' in root.");
 				}
 				$mergedApp->services[$service->name] = $service;
+			}
+			foreach ($app->commands as $command) {
+				if (isset($mergedApp->commands[$command->name])) {
+					throw new InvalidArgumentException("Duplicate definition of command '$command->name' in root.");
+				}
+				$mergedApp->commands[$command->name] = $command;
 			}
 		}
 		return $mergedApp;

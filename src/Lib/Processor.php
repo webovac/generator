@@ -9,6 +9,7 @@ use Stepapo\Utils\Printer;
 use Webovac\Core\Lib\Dataset\CmsDatasetFactory;
 use Webovac\Generator\CmsGenerator;
 use Webovac\Generator\Config\App;
+use Webovac\Generator\Config\Command;
 use Webovac\Generator\Config\Component;
 use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Module;
@@ -89,6 +90,11 @@ class Processor
 					$this->createService($service, $module);
 				}
 			}
+			foreach ($module->commands as $command) {
+				if ($reset || !isset($old->modules[$module->name]->commands[$command->name])) {
+					$this->createCommand($command, $module);
+				}
+			}
 		}
 		foreach ($new->components as $component) {
 			if ($reset || !isset($old->components[$component->name])) {
@@ -98,6 +104,11 @@ class Processor
 		foreach ($new->services as $service) {
 			if ($reset || !isset($old->services[$service->name])) {
 				$this->createService($service);
+			}
+		}
+		foreach ($new->commands as $command) {
+			if ($reset || !isset($old->commands[$command->name])) {
+				$this->createCommand($command);
 			}
 		}
 		# CHECK FOR REMOVAL
@@ -203,6 +214,17 @@ class Processor
 	}
 
 
+	private function createCommand(Command $command, ?Module $module = null): void
+	{
+		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
+		$this->printer->printText(': creating command ');
+		$this->printer->printText($command->name, 'white');
+		$this->generator->createCommand($command->name, $module?->name);
+		$this->count++;
+		$this->printer->printOk();
+	}
+
+
 	private function removeModule(Module $module)
 	{
 		$this->printer->printText($module->name, 'white');
@@ -219,6 +241,17 @@ class Processor
 		$this->printer->printText(': removing component ');
 		$this->printer->printText($component->name, 'white');
 		$this->generator->removeCmsComponent($component->name, $module?->name);
+		$this->count++;
+		$this->printer->printOk();
+	}
+
+
+	private function removeCommand(Command $command, ?Module $module = null)
+	{
+		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
+		$this->printer->printText(': removing command ');
+		$this->printer->printText($command->name, 'white');
+		$this->generator->removeCommand($command->name, $module?->name);
 		$this->count++;
 		$this->printer->printOk();
 	}

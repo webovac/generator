@@ -260,8 +260,8 @@ class CmsGenerator extends Generator
 		}
 //		$dataModelPath = "$basePath/{$module}DataModel.php";
 //		$this->createFile($dataModelPath, $generator->generateUpdatedDataModel($dataModelPath));
-//		$modelPath = "$basePath/{$module}Orm.php";
-//		$this->createFile($modelPath, $generator->generateUpdatedModel($modelPath));
+		$modelPath = "$basePath/{$module}Orm.php";
+		$this->createFile($modelPath, $generator->generateUpdatedModel($modelPath));
 	}
 
 

@@ -4,10 +4,10 @@ namespace Webovac\Generator\Config;
 
 use Stepapo\Utils\Attribute\ArrayOfType;
 use Stepapo\Utils\Attribute\KeyProperty;
-use Stepapo\Utils\Schematic;
+use Stepapo\Utils\Config;
 
 
-class Module extends Schematic
+class Module extends Config
 {
 	#[KeyProperty] public string $name;
 	public string $namespace = 'App\Module';

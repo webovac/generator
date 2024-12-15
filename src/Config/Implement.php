@@ -4,10 +4,10 @@ namespace Webovac\Generator\Config;
 
 use Stepapo\Utils\Attribute\KeyProperty;
 use Stepapo\Utils\Attribute\ValueProperty;
-use Stepapo\Utils\Schematic;
+use Stepapo\Utils\Config;
 
 
-class Implement extends Schematic
+class Implement extends Config
 {
 	#[KeyProperty] public string $class;
 	#[ValueProperty] public array $requires = [];

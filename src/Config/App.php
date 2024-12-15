@@ -3,10 +3,10 @@
 namespace Webovac\Generator\Config;
 
 use Stepapo\Utils\Attribute\ArrayOfType;
-use Stepapo\Utils\Schematic;
+use Stepapo\Utils\Config;
 
 
-class App extends Schematic
+class App extends Config
 {
 	public string $namespace = 'App';
 	/** @var Component[] */ #[ArrayOfType(Component::class)] public array $components = [];

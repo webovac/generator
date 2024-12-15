@@ -4,10 +4,10 @@ namespace Webovac\Generator\Config;
 
 use Stepapo\Utils\Attribute\ArrayOfType;
 use Stepapo\Utils\Attribute\KeyProperty;
-use Stepapo\Utils\Schematic;
+use Stepapo\Utils\Config;
 
 
-class Entity extends Schematic
+class Entity extends Config
 {
 	#[KeyProperty] public string $name;
 	public bool $withTraits = true;

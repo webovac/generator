@@ -3,10 +3,10 @@
 namespace Webovac\Generator\Config;
 
 use Stepapo\Utils\Attribute\KeyProperty;
-use Stepapo\Utils\Schematic;
+use Stepapo\Utils\Config;
 
 
-class Command extends Schematic
+class Command extends Config
 {
 	#[KeyProperty] public string $name;
 }

@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
+use App\Module\Jarda\Control\ActivityItem\ActivityItemControl;
 use Nette\Application\UI\Form;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\InterfaceType;
+use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
@@ -22,24 +24,25 @@ class CmsComponentGenerator extends ComponentGenerator
 {
 	private string $lname;
 	private string $namespace;
+	private string $entityName;
 	private string $lentityName;
-	private string $entity;
 
 
 	public function __construct(
 		private string $name,
 		private string $appNamespace,
 		private ?string $module = null,
-		private ?string $entityName = null,
+		private ?string $entity = null,
 		private bool $withTemplateName = false,
 		private ?string $type = null,
 		private ?string $factory = null,
 		private string $mode = CmsGenerator::MODE_ADD,
 	) {
-		parent::__construct($name, $appNamespace, $module, $entityName, $withTemplateName, $type, $factory);
-		if ($this->entityName) {
+		parent::__construct($name, $appNamespace, $module, $entity, $withTemplateName, $type, $factory);
+		if ($this->entity) {
+			$parts = explode('\\', $this->entity);
+			$this->entityName = Arrays::last($parts);
 			$this->lentityName = lcfirst($this->entityName);
-			$this->entity = "$this->appNamespace\Model\\$this->entityName\\$this->entityName";
 		}
 		$this->lname = lcfirst($name);
 		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\$this->module" : '') . "\Control\\$this->name";
@@ -65,7 +68,7 @@ class CmsComponentGenerator extends ComponentGenerator
 			->addUse($base)
 			->add($class);
 
-		if ($this->entityName) {
+		if ($this->entity) {
 			$constructMethod
 				->addPromotedParameter($this->lentityName)
 				->setPrivate()
@@ -75,12 +78,21 @@ class CmsComponentGenerator extends ComponentGenerator
 		}
 
 		if ($this->withTemplateName) {
+			$class->addConstant('TEMPLATE_DEFAULT', 'default')
+				->setType('string');
+			$constructMethod
+				->addPromotedParameter('moduleClass')
+				->setType('string');
 			$constructMethod
 				->addPromotedParameter('templateName')
 				->setType('string');
 		}
 
-		$renderMethod->addBody("\$this->template->render(__DIR__ . '/" . ($this->withTemplateName ? "' . \$this->templateName . '" : $this->lname) . ".latte');");
+		$renderMethod->addBody(
+			$this->withTemplateName
+				? "\$this->template->renderFile(\$this->moduleClass, self::class, \$this->templateName);"
+				: "\$this->template->render(__DIR__ . '/{$this->lname}.latte');"
+		);
 
 		if ($this->type) {
 			if ($this->factory) {
@@ -121,7 +133,7 @@ class CmsComponentGenerator extends ComponentGenerator
 			->add($class)
 			->addUse(Factory::class);
 
-		if ($this->entityName) {
+		if ($this->entity) {
 			$createMethod
 				->addParameter($this->lentityName)
 				->setType($this->entity);
@@ -130,7 +142,11 @@ class CmsComponentGenerator extends ComponentGenerator
 
 		if ($this->withTemplateName) {
 			$createMethod
-				->addParameter('templateName')
+				->addParameter('moduleClass', new Literal("{$this->module}::class"))
+				->setType('string');
+			$namespace->addUse("App\\Module\\$this->module\\$this->module");
+			$createMethod
+				->addParameter('templateName', new Literal("{$this->name}Control::TEMPLATE_DEFAULT"))
 				->setType('string');
 		}
 
@@ -159,7 +175,7 @@ class CmsComponentGenerator extends ComponentGenerator
 			$createComponentMethod
 				->setPublic()
 				->setReturnType($control)
-				->setBody($this->entityName
+				->setBody($this->entity
 					? <<<EOT
 assert(\$this->entity instanceof $this->entityName);
 return \$this->$this->lname->create(\$this->entity);
@@ -171,8 +187,8 @@ EOT);
 			$namespace
 				->addUse($factory)
 				->addUse($control);
-			if ($this->entityName) {
-				$createComponentMethod->addAttribute(RequiresEntity::class, ["$this->entity::class"]);
+			if ($this->entity) {
+				$createComponentMethod->addAttribute(RequiresEntity::class, [new Literal("$this->entityName::class")]);
 				$namespace->addUse(RequiresEntity::class);
 				$namespace->addUse($this->entity);
 			}

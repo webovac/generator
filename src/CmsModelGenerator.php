@@ -21,8 +21,8 @@ use Nextras\Orm\Mapper\Dbal\Conventions\IConventions;
 use Nextras\Orm\StorageReflection\StringHelper;
 use Stepapo\Generator\ModelGenerator;
 use Stepapo\Model\Data\Collection;
+use Stepapo\Model\Data\DataRepository;
 use Stepapo\Model\Data\Item;
-use Webovac\Core\Model\CmsDataRepository;
 use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Model\CmsMapper;
 use Webovac\Core\Model\CmsRepository;
@@ -337,14 +337,12 @@ EOT
 			return null;
 		}
 		$class = (new ClassType("{$this->name}DataRepository"))
-			->setExtends(CmsDataRepository::class);
+			->setExtends(DataRepository::class);
 		$class
-			->addComment("@method {$this->name}Data[]|Collection findAll()")
-			->addComment("@method {$this->name}Data[]|Collection findBy(array \$conds)")
-			->addComment("@method {$this->name}Data|null getById(\$id)")
-			->addComment("@method {$this->name}Data|null getBy(array \$conds)");
+			->addComment("@method {$this->name}Data[]|Collection findByKey(array \$keys)")
+			->addComment("@method {$this->name}Data|null getByKey(mixed \$key)");
 		$namespace = (new PhpNamespace($this->modelNamespace))
-			->addUse(CmsDataRepository::class)
+			->addUse(DataRepository::class)
 			->addUse(Collection::class)
 			->addUse("$this->modelNamespace\\{$this->name}Data")
 			->add($class);
@@ -378,8 +376,8 @@ EOT
 			->add($class);
 
 		if (!$this->withTraits) {
-			$class->setExtends(CmsDataRepository::class);
-			$namespace->addUse(CmsDataRepository::class);
+			$class->setExtends(DataRepository::class);
+			$namespace->addUse(DataRepository::class);
 		}
 
 		$file = (new PhpFile())->setStrictTypes();

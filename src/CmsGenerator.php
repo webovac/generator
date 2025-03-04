@@ -96,7 +96,7 @@ class CmsGenerator extends Generator
 	public function createCmsComponent(
 		string $name,
 		?string $module = null,
-		?string $entityName = null,
+		?string $entity = null,
 		bool $withTemplateName = false,
 		string $type = null,
 		string $factory = null,
@@ -106,17 +106,18 @@ class CmsGenerator extends Generator
 			name: $name,
 			appNamespace: $this->appNamespace,
 			module: $module,
-			entityName: $entityName,
+			entity: $entity,
 			withTemplateName: $withTemplateName,
 			type: $type,
 			factory: $factory,
 		);
 		$basePath = "$this->appDir/Module/$module/Control";
 		$lname = lcfirst($name);
+		$templateName = $withTemplateName ? 'default' : $lname;
 		$this->createFile("$basePath/$name/{$name}Template.php", $generator->generateTemplate(BaseTemplate::class));
 		$this->createFile("$basePath/$name/I{$name}Control.php", $generator->generateFactory());
 		$this->createFile("$basePath/$name/{$name}Control.php", $generator->generateControl(BaseControl::class));
-		$this->createFile("$basePath/$name/$lname.latte", $generator->generateLatte());
+		$this->createFile("$basePath/$name/$templateName.latte", $generator->generateLatte());
 		if ($type === ComponentGenerator::TYPE_DATASET) {
 			$this->createFile("$basePath/$name/$lname.neon", $generator->generateDatasetNeon());
 		}
@@ -134,14 +135,14 @@ class CmsGenerator extends Generator
 	public function removeCmsComponent(
 		string $name,
 		?string $module = null,
-		?string $entityName = null,
+		?string $entity = null,
 	): void
 	{
 		$generator = new CmsComponentGenerator(
 			name: $name,
 			appNamespace: $this->appNamespace,
 			module: $module,
-			entityName: $entityName,
+			entity: $entity,
 			mode: CmsGenerator::MODE_REMOVE,
 		);
 		$basePath = "$this->appDir/" . ($module ? "Module/$module/" : '') . "Control/$name";

@@ -212,7 +212,7 @@ class Processor
 		$this->generator->createCmsComponent(
 			$component->name,
 			$module?->name ?: 'App',
-			$component->entityName,
+			$component->entity,
 			$component->withTemplateName,
 			$component->type,
 			factory: match ($component->type) {

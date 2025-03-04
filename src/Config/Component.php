@@ -9,7 +9,7 @@ use Stepapo\Utils\Config;
 class Component extends Config
 {
 	#[KeyProperty] public string $name;
-	public ?string $entityName = null;
+	public ?string $entity = null;
 	public bool $withTemplateName = false;
 	public ?string $type = null;
 }

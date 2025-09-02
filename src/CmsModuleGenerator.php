@@ -16,6 +16,7 @@ use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
 use Stepapo\Model\Definition\DefinitionGroup;
+use Stepapo\Model\Definition\HasDefinitionGroup;
 use Stepapo\Model\Manipulation\ManipulationGroup;
 use Stepapo\Model\MigrationGroup;
 use Stepapo\Utils\DI\StepapoExtension;
@@ -78,11 +79,12 @@ class CmsModuleGenerator
 		if ($this->withDefinitionGroup) {
 			$getDefinitionGroupMethod = (new Method('getDefinitionGroup'))
 				->setPublic()
-				->setReturnType(MigrationGroup::class)
+				->setReturnType(DefinitionGroup::class)
 				->setBody(<<<EOT
 return new DefinitionGroup($this->name::getModuleName(), $this->name::class, [Core::getModuleName()]);
 EOT);
 			$class->addMember($getDefinitionGroupMethod);
+			$class->addImplement(HasDefinitionGroup::class);
 			$namespace->addUse(DefinitionGroup::class);
 			$namespace->addUse(Core::class);
 		}
@@ -114,7 +116,7 @@ EOT);
 			->setReturnType('void')
 			->setBody(<<<EOT
 \$this->onStartup[] = function () {
-	\$this->addComponents('$this->lname', {$this->name}Control::class);
+	
 };
 EOT);
 
@@ -351,43 +353,49 @@ EOT;
 	{
 		if ($type === 'module') {
 			return <<<EOT
-name: $this->name
-homePage: $this->name:Home
-icon:
-translations:
-	cs: [title: $this->name, basePath: $this->lname, description: '']
-	en: [title: $this->name, basePath: $this->lname, description: '']
-pages:
-	$this->name:Home:
-		icon: 
+class: App\Model\Module\ModuleData
+items:
+	$this->name:
+		name: $this->name
+		homePage: $this->name:Home
+		icon:
 		translations:
-			cs: [title: $this->name, path: , content: '<h1>$this->name</h1>']
-			en: [title: $this->name, path: , content: '<h1>$this->name</h1>']
-tree:
-	$this->name:Home:
+			cs: [title: $this->name, basePath: $this->lname, description: '']
+			en: [title: $this->name, basePath: $this->lname, description: '']
+		pages:
+			$this->name:Home:
+				icon: 
+				translations:
+					cs: [title: $this->name, path: , content: '<h1>$this->name</h1>']
+					en: [title: $this->name, path: , content: '<h1>$this->name</h1>']
+		tree:
+			$this->name:Home:
 
 EOT;
 		} else if ($type === 'web') {
 			return <<<EOT
-host: %host%
-code: $this->lname
-homePage: Home
-color: ''
-complementaryColor: ''
-iconBackgroundColor: ''
-layout: default 
-translations:
-	cs: [title: $this->name]
-	en: [title: $this->name]
-pages:
-	Home:
-		icon: 
+class: App\Model\Web\WebData
+items:
+	$this->lname:
+		host: %host%
+		code: $this->lname
+		homePage: Home
+		color: ''
+		complementaryColor: ''
+		iconBackgroundColor: ''
+		layout: default 
 		translations:
-			cs: [title: $this->name, path: , content: '<h1>$this->name</h1>']
-			en: [title: $this->name, path: en, content: '<h1>$this->name</h1>']
-webModules: [Admin, Auth]
-tree:
-	Home:
+			cs: [title: $this->name]
+			en: [title: $this->name]
+		pages:
+			Home:
+				icon: 
+				translations:
+					cs: [title: $this->name, path: , content: '<h1>$this->name</h1>']
+					en: [title: $this->name, path: en, content: '<h1>$this->name</h1>']
+		webModules: [Admin, Auth]
+		tree:
+			Home:
 
 EOT;
 		}

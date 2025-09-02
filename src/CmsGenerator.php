@@ -62,10 +62,10 @@ class CmsGenerator extends Generator
 				$this->createFile("$basePath/DI/config.neon", $generator->generateConfigNeon());
 			}
 			if ($withInstallFile) {
-				$this->createFile("$basePath/migrations/manipulations/insert.$type.$lname.neon", $generator->generateInstallNeon($type));
+				$this->createFile("$basePath/config/manipulations/insert.$type.$lname.neon", $generator->generateInstallNeon($type));
 			}
 			if ($withMigrationGroup) {
-				$this->createFile("$basePath/migrations/definitions/001-init.neon");
+				$this->createFile("$basePath/config/definitions/001-init.neon");
 			}
 		}
 		$this->updateAppFiles($name, $withModel, isPackage: $isPackage, moduleNamespace: $moduleNamespace);

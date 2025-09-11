@@ -444,7 +444,7 @@ EOT
 	}
 
 
-	private function modifyFile(string $path, string $trait, array $implements = [], callable|null $create = null): PhpFile
+	private function modifyFile(string $path, string $trait, array $implements = [], ?callable $create = null): PhpFile
 	{
 		if (!($content = @file_get_contents($path)) && $create && $this->mode === CmsGenerator::MODE_ADD) {
 			return $create();

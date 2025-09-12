@@ -18,7 +18,6 @@ use Nette\Utils\Arrays;
 use Stepapo\Model\Definition\DefinitionGroup;
 use Stepapo\Model\Definition\HasDefinitionGroup;
 use Stepapo\Model\Manipulation\ManipulationGroup;
-use Stepapo\Model\MigrationGroup;
 use Stepapo\Utils\DI\StepapoExtension;
 use Stepapo\Utils\Factory;
 use Webovac\Core\Control\BaseControl;

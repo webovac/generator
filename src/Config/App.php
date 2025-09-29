@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Webovac\Generator\Config;
 
 use Stepapo\Utils\Attribute\ArrayOfType;

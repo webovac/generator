@@ -71,7 +71,6 @@ class Processor
 				break;
 			}
 		}
-		Dumper::dump($new);
 		# CHECK FOR CREATION
 		foreach ($new->modules as $module) {
 			if ($reset || !isset($old->modules[$module->name])) {

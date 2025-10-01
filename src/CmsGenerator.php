@@ -10,6 +10,7 @@ use Nette\Utils\Arrays;
 use Nette\Utils\FileSystem;
 use Stepapo\Generator\ComponentGenerator;
 use Stepapo\Generator\Generator;
+use Tracy\Dumper;
 use Webovac\Core\Control\BaseControl;
 use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Module;
@@ -272,7 +273,7 @@ class CmsGenerator extends Generator
 			name: $name,
 			appNamespace: $this->appNamespace,
 			moduleNamespace: $isPackage ? $moduleNamespace : "$this->appNamespace\\Module",
-			mode: $mode
+			mode: $mode,
 		);
 		$basePresenterPath = "$this->appDir/Presenter/BasePresenter.php";
 		$this->createFile("$this->appDir/Presenter/BasePresenter.php", $generator->generateUpdatedBasePresenter($basePresenterPath));

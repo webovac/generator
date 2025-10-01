@@ -6,6 +6,7 @@ namespace Webovac\Generator\Lib;
 
 use Stepapo\Generator\ComponentGenerator;
 use Stepapo\Utils\Printer;
+use Tracy\Dumper;
 use Webovac\Core\Lib\Dataset\CmsDatasetFactory;
 use Webovac\Generator\CmsGenerator;
 use Webovac\Generator\Config\App;
@@ -70,6 +71,7 @@ class Processor
 				break;
 			}
 		}
+		Dumper::dump($new);
 		# CHECK FOR CREATION
 		foreach ($new->modules as $module) {
 			if ($reset || !isset($old->modules[$module->name])) {
@@ -158,7 +160,7 @@ class Processor
 		# CHECK IMPLEMENTS
 		foreach ($new->modules as $module) {
 			foreach ($module->entities as $entity) {
-				$this->generator->checkCmsModel($entity, $module);
+				$this->updateEntity($entity, $module);
 			}
 		}
 	}
@@ -201,6 +203,12 @@ class Processor
 		);
 		$this->count++;
 		$this->printer->printOk();
+	}
+
+
+	private function updateEntity(Entity $entity, ?Module $module = null): void
+	{
+		$this->generator->checkCmsModel($entity, $module);
 	}
 
 

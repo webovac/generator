@@ -488,6 +488,12 @@ EOT
 		$namespace = Arrays::first($file->getNamespaces());
 		$alreadyImplements = $class->getImplements();
 		foreach ($implements as $implement) {
+			if (!in_array($implement->class, $alreadyImplements, true)) {
+				$class->addImplement($implement->class);
+				$namespace->addUse($implement->class);
+			}
+		}
+		foreach ($implements as $implement) {
 			foreach ($implement->requires as $require) {
 				if (!in_array($require, $alreadyImplements, true)) {
 					$class->removeImplement($implement->class);

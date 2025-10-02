@@ -30,7 +30,7 @@ modules:
 - `bin/generate.php`
 
 ```php
-$generator = new CmsGenerator;
+$generator = new Generator;
 $processor = new Processor($generator);
 $processor->process(
 	folders: [__DIR__ . '/../config/files'],

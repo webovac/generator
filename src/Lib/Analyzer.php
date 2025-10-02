@@ -17,7 +17,7 @@ use Webovac\Generator\Config\Service;
 
 class Analyzer
 {
-	public function getApp(string $appDir): App
+	public function getApp(string $appDir, string $buildDir): App
 	{
 		$app = new App;
 		if (file_exists($dir = $appDir . '/Module')) {
@@ -79,7 +79,7 @@ class Analyzer
 				$app->commands[$command->name] = $command;
 			}
 		}
-		if (file_exists($path = $appDir . '/Presenter/BasePresenter.php')) {
+		if (file_exists($path = $buildDir . '/Presenter/BasePresenter.php')) {
 			$file = PhpFile::fromCode(file_get_contents($path));
 			$class = Arrays::first($file->getClasses());
 			foreach ($class->getTraits() as $trait) {
@@ -91,7 +91,7 @@ class Analyzer
 					$module->name = $moduleName;
 					$module->namespace = $m[1];
 					$module->isPackage = true;
-					foreach (Finder::findFiles('*Mapper.php')->from($appDir . '/Model') as $repositoryFile) {
+					foreach (Finder::findFiles('*Mapper.php')->from($buildDir . '/Model') as $repositoryFile) {
 						$f = PhpFile::fromCode(file_get_contents($repositoryFile->getPathname()));
 						$c = Arrays::first($f->getClasses());
 						foreach ($c->getTraits() as $t) {

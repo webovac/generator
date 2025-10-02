@@ -16,7 +16,6 @@
 	},
 	"require": {
 		"php": ">=8.1",
-		"stepapo/generator": "dev-main",
 		"webovac/core": "dev-main"
 	},
 	"autoload": {

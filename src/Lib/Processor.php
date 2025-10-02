@@ -6,15 +6,14 @@ namespace Webovac\Generator\Lib;
 
 use Stepapo\Generator\ComponentGenerator;
 use Stepapo\Utils\Printer;
-use Tracy\Dumper;
 use Webovac\Core\Lib\Dataset\CmsDatasetFactory;
-use Webovac\Generator\CmsGenerator;
 use Webovac\Generator\Config\App;
 use Webovac\Generator\Config\Command;
 use Webovac\Generator\Config\Component;
 use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Module;
 use Webovac\Generator\Config\Service;
+use Webovac\Generator\Generator;
 
 
 class Processor
@@ -26,7 +25,7 @@ class Processor
 
 
 	public function __construct(
-		private CmsGenerator $generator,
+		private Generator $generator,
 	) {
 		$this->printer = new Printer;
 		$this->collector = new Collector;
@@ -34,7 +33,7 @@ class Processor
 	}
 
 
-	public function process(array $folders, string $appDir): int
+	public function process(array $folders, string $appDir, string $buildDir): int
 	{
 		$start = microtime(true);
 		$this->printer->printBigSeparator();
@@ -42,7 +41,7 @@ class Processor
 		$this->printer->printSeparator();
 		try {
 			$new = $this->collector->getApp($folders);
-			$old = $this->analyzer->getApp($appDir);
+			$old = $this->analyzer->getApp($appDir, $buildDir);
 			$this->processApp($new, $old);
 			if ($this->count === 0) {
 				$this->printer->printLine('No changes');
@@ -66,7 +65,7 @@ class Processor
 	{
 		$reset = false;
 		foreach ($_SERVER['argv'] as $arg) {
-			if ($arg === '--reset') {
+			if ($arg === '--clear') {
 				$reset = true;
 				break;
 			}
@@ -190,7 +189,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': creating entity ');
 		$this->printer->printText($entity->name, 'white');
-		$this->generator->createCmsModel(
+		$this->generator->createModel(
 			$entity->name,
 			$module?->name,
 			$entity->withTraits,
@@ -207,7 +206,7 @@ class Processor
 
 	private function updateEntity(Entity $entity, ?Module $module = null): void
 	{
-		$this->generator->checkCmsModel($entity, $module);
+		$this->generator->checkModel($entity, $module);
 	}
 
 
@@ -216,7 +215,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': creating component ');
 		$this->printer->printText($component->name, 'white');
-		$this->generator->createCmsComponent(
+		$this->generator->createComponent(
 			$component->name,
 			$module?->name ?: 'App',
 			$component->entity,
@@ -269,7 +268,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing component ');
 		$this->printer->printText($component->name, 'white');
-		$this->generator->removeCmsComponent($component->name, $module?->name);
+		$this->generator->removeComponent($component->name, $module?->name);
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -302,7 +301,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing entity ');
 		$this->printer->printText($entity->name, 'white');
-		$this->generator->removeCmsModel($entity->name, $module?->name, $module?->isPackage ?: false);
+		$this->generator->removeModel($entity->name, $module?->name, $module?->isPackage ?: false);
 		$this->count++;
 		$this->printer->printOk();
 	}

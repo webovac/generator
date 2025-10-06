@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
-use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;
-use Nette\PhpGenerator\PhpNamespace;
-use Stepapo\Utils\Command\Command;
+use Nette\Utils\Arrays;
+use Webovac\Generator\Config\Command;
+use Webovac\Generator\Config\File;
+use Webovac\Generator\Config\Module;
 
 
 class CommandGenerator
@@ -17,28 +18,26 @@ class CommandGenerator
 
 
 	public function __construct(
-		private string $name,
 		private string $appNamespace,
-		private ?string $module = null,
+		private Command $command,
+		private ?Module $module = null,
 	) {
-		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\{$this->module}" : '') . "\Command";
+		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\{$this->module->name}" : '') . "\Command";
 	}
 
 
 	public function createCommand(): PhpFile
 	{
-		$class = (new ClassType("{$this->name}"))
-			->addImplement(Command::class)
+		$file = File::createPhp(
+			name: $this->command->name,
+			namespace: $this->namespace,
+			implements: [Command::class],
+		);
+		$namespace = Arrays::first($file->getNamespaces());
+		$class = Arrays::first($namespace->getClasses());
+		$class
 			->addMember((new Method('__construct'))->setPublic())
 			->addMember((new Method('run'))->setPublic()->setReturnType('int')->setBody('return 0;'));
-
-		$namespace = (new PhpNamespace("{$this->namespace}"))
-			->add($class)
-			->addUse(Command::class);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
 		return $file;
 	}
 }

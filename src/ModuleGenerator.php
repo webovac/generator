@@ -4,11 +4,8 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
-use AllowDynamicProperties;
 use Build\Control\BaseTemplate;
-use Nette\Application\UI\Presenter;
 use Nette\Bridges\ApplicationLatte\Template;
-use Nette\Bridges\ApplicationLatte\TemplateFactory;
 use Nette\DI\Attributes\Inject;
 use Nette\InvalidArgumentException;
 use Nette\PhpGenerator\Attribute;
@@ -19,41 +16,40 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
-use Nextras\Orm\Model\Model;
+use Stepapo\Model\Data\Item;
 use Stepapo\Model\Definition\DefinitionGroup;
 use Stepapo\Model\Definition\HasDefinitionGroup;
 use Stepapo\Model\Manipulation\ManipulationGroup;
 use Stepapo\Utils\DI\StepapoExtension;
 use Stepapo\Utils\Factory;
-use Stepapo\Utils\Injectable;
 use Webovac\Core\Control\BaseControl;
 use Webovac\Core\Core;
 use Webovac\Core\MainModuleControl;
 use Webovac\Core\Model\CmsEntity;
-use Webovac\Core\Module;
+use Webovac\Generator\Config\File;
+use Webovac\Generator\Config\Module;
+use Webovac\Generator\Lib\Writer;
 
 
 class ModuleGenerator
 {
+	private string $name;
 	private string $lname;
 	private string $namespace;
-	private string $module;
 	private string $mainControl;
 	private string $mainControlInterface;
+	private Writer $writer;
 
 
 	public function __construct(
-		private readonly string $name,
-		private readonly string $buildNamespace,
-		private readonly string $moduleNamespace,
-		private readonly bool $withDefinitionGroup = false,
-		private readonly bool $withManipulationGroup = false,
+		private Module $module,
 	) {
+		$this->name = $this->module->name;
 		$this->lname = lcfirst($this->name);
-		$this->namespace = "$this->moduleNamespace\\$this->name";
-		$this->module = "$this->namespace\\$this->name";
+		$this->namespace = "{$this->module->namespace}\\$this->name";
 		$this->mainControl = "$this->namespace\Control\\$this->name\\{$this->name}Control";
 		$this->mainControlInterface = "$this->namespace\Control\\$this->name\I{$this->name}Control";
+		$this->writer = new Writer;
 	}
 
 
@@ -80,7 +76,7 @@ class ModuleGenerator
 			->addUse(Module::class)
 			->add($class);
 
-		if ($this->withDefinitionGroup) {
+		if ($this->module->withDefinitionGroup) {
 			$getDefinitionGroupMethod = (new Method('getDefinitionGroup'))
 				->setPublic()
 				->setReturnType(DefinitionGroup::class)
@@ -93,7 +89,7 @@ EOT);
 			$namespace->addUse(Core::class);
 		}
 
-		if ($this->withManipulationGroup) {
+		if ($this->module->withManipulationGroup) {
 			$getManipulationGroups = (new Method('getManipulationGroups'))
 				->setPublic()
 				->setReturnType('array')
@@ -162,29 +158,21 @@ EOT);
 
 	public function createPresenterTemplateTrait(): PhpFile
 	{
-		$trait = (new TraitType("{$this->name}PresenterTemplate"));
-
-		$namespace = (new PhpNamespace("$this->namespace\Presenter"))
-			->add($trait);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		return File::createPhp(
+			name: "{$this->name}PresenterTemplate",
+			namespace: "$this->namespace\Presenter",
+			type: TraitType::class,
+		);
 	}
 
 
 	public function createTemplateTrait(): PhpFile
 	{
-		$trait = (new TraitType("{$this->name}Template"));
-
-		$namespace = (new PhpNamespace("$this->namespace\Control"))
-			->add($trait);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		return File::createPhp(
+			name: "{$this->name}Template",
+			namespace: "$this->namespace\Control",
+			type: TraitType::class,
+		);
 	}
 
 
@@ -277,17 +265,11 @@ EOT);
 
 	public function createMainTemplate(): PhpFile
 	{
-		$class = (new ClassType("{$this->name}Template"))
-			->setExtends(BaseTemplate::class);
-
-		$namespace = (new PhpNamespace("$this->namespace\Control\\$this->name"))
-			->addUse(BaseTemplate::class)
-			->add($class);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		return File::createPhp(
+			name: "{$this->name}Template",
+			namespace: "$this->namespace\Control\\$this->name",
+			extends: BaseTemplate::class,
+		);
 	}
 
 
@@ -302,45 +284,31 @@ EOT;
 
 	public function createModelTrait(): PhpFile
 	{
-		$trait = (new TraitType("{$this->name}Orm"));
-
-		$namespace = (new PhpNamespace("$this->namespace\Model"))
-			->add($trait);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		return File::createPhp(
+			name: "{$this->name}Orm",
+			namespace: "$this->namespace\Model",
+			type: TraitType::class,
+		);
 	}
 
 
 	public function createDataModelTrait(): PhpFile
 	{
-		$trait = (new TraitType("{$this->name}DataModel"));
-
-		$namespace = (new PhpNamespace("$this->namespace\Model"))
-			->add($trait);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		return File::createPhp(
+			name: "{$this->name}DataModel",
+			namespace: "$this->namespace\Model",
+			type: TraitType::class,
+		);
 	}
 
 
 	public function createDIExtension(): PhpFile
 	{
-		$class = (new ClassType("{$this->name}Extension"))
-			->setExtends(StepapoExtension::class);
-
-		$namespace = (new PhpNamespace("$this->namespace\DI"))
-			->addUse(StepapoExtension::class)
-			->add($class);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		return File::createPhp(
+			name: "{$this->name}Extension",
+			namespace: "$this->namespace\DI",
+			extends: StepapoExtension::class,
+		);
 	}
 
 
@@ -409,53 +377,42 @@ EOT;
 
 	public function updateBasePresenter(string $path): PhpFile
 	{
-		return $this->updateFileWithTrait($path, "$this->namespace\Presenter\\{$this->name}Presenter");
+		return $this->updateFile($path, "$this->namespace\Presenter\\{$this->name}Presenter");
 	}
 
 
 	public function updateBasePresenterTemplate(string $path): PhpFile
 	{
-		return $this->updateFileWithTrait($path, "$this->namespace\Presenter\\{$this->name}PresenterTemplate");
+		return $this->updateFile($path, "$this->namespace\Presenter\\{$this->name}PresenterTemplate");
 	}
 
 
 	public function updateBaseTemplate(string $path): PhpFile
 	{
-		return $this->updateFileWithTrait($path, "$this->namespace\Control\\{$this->name}Template");
+		return $this->updateFile($path, "$this->namespace\Control\\{$this->name}Template");
 	}
 
 
 	public function updateTemplateFactory(string $path): PhpFile
 	{
-		return $this->updateFileWithTrait($path, "$this->namespace\Lib\\{$this->name}TemplateFactory");
+		return $this->updateFile($path, "$this->namespace\Lib\\{$this->name}TemplateFactory");
 	}
 
 
 	public function updateModel(string $path): PhpFile
 	{
-		return $this->updateFileWithTrait($path, "$this->namespace\Model\\{$this->name}Orm");
+		return $this->updateFile($path, "$this->namespace\Model\\{$this->name}Orm");
 	}
 
 
 	public function updateDataModel(string $path): PhpFile
 	{
-		return $this->updateFileWithTrait($path, "$this->namespace\Model\\{$this->name}DataModel");
+		return $this->updateFile($path, "$this->namespace\Model\\{$this->name}DataModel");
 	}
 
 
-	private function updateFileWithTrait(string $path, string $trait): PhpFile
+	private function updateFile(string $path, string $trait, array $implements = []): PhpFile
 	{
-		if (!($content = @file_get_contents($path))) {
-			throw new InvalidArgumentException("File '$path' does not exist.");
-		}
-		$file = PhpFile::fromCode($content);
-		$class = Arrays::first($file->getClasses());
-		$traits = $class->getTraits();
-		$namespace = Arrays::first($file->getNamespaces());
-		if (!array_key_exists($trait, $traits)) {
-			$class->addTrait($trait);
-			$namespace->addUse($trait);
-		}
-		return $file;
+		return $this->writer->updateFile($path, $trait, $implements);
 	}
 }

@@ -47,6 +47,20 @@ class Processor
 				$this->printer->printLine('No changes');
 			}
 			$this->printer->printSeparator();
+//			$end = microtime(true);
+//			$this->printer->printLine(sprintf("%d items | %0.3f s | OK", $this->count, $end - $start), 'lime');
+//		} catch (\Exception $e) {
+//			$this->printer->printError();
+//			$this->printer->printSeparator();
+//			$end = microtime(true);
+//			$this->printer->printLine(sprintf("%d items | %0.3f s | ERROR", $this->count, $end - $start), 'red');
+//			$this->printer->printLine($e->getMessage());
+//			$this->printer->printLine($e->getTraceAsString());
+//		}
+//		$this->printer->printBigSeparator();
+//		$this->printer->printLine('Build', 'aqua');
+//		$this->printer->printSeparator();
+//		try {
 			$this->printer->printText('Building... ');
 			$this->build($app);
 			$this->printer->printLine('OK', 'lime');
@@ -72,17 +86,26 @@ class Processor
 		foreach ($app->modules as $module) {
 			$this->generator->updateBuild($module);
 			foreach ($module->entities as $entity) {
+				if (!$entity->withTraits) {
+					continue;
+				}
 				if (!array_key_exists($entity->name, $entities)) {
 					$this->generator->createBuildEntity($entity);
+					$entities[$entity->name] = $entity->name;
 				}
-				$entities[$entity->name] = $entity->name;
 				$this->generator->updateBuildEntity($entity, $module);
 			}
 		}
+		$this->generator->checkBuild();
 		# CHECK IMPLEMENTS
+		$entities = [];
 		foreach ($app->modules as $module) {
 			foreach ($module->entities as $entity) {
+				if (!$entity->withTraits || array_key_exists($entity->name, $entities)) {
+					continue;
+				}
 				$this->updateEntity($entity, $module);
+				$entities[$entity->name] = $entity->name;
 			}
 		}
 	}
@@ -92,7 +115,7 @@ class Processor
 	{
 		$reset = false;
 		foreach ($_SERVER['argv'] as $arg) {
-			if ($arg === '--clear') {
+			if ($arg === '--reset') {
 				$reset = true;
 				break;
 			}
@@ -195,17 +218,7 @@ class Processor
 	{
 		$this->printer->printText($module->name, 'white');
 		$this->printer->printText(': creating module');
-		$this->generator->createModule(
-			$module->name,
-			(bool) $module->entities,
-			$module->withDIExtension,
-			$module->withMigrationGroup,
-			$module->withInstallGroups,
-			$module->withInstallFile,
-			$module->type,
-			$module->isPackage,
-			$module->namespace,
-		);
+		$this->generator->createModule($module);
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -216,14 +229,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': creating entity ');
 		$this->printer->printText($entity->name, 'white');
-		$this->generator->createModel(
-			$entity->name,
-			$module?->name,
-			$entity->withTraits,
-			$entity->withConventions,
-			isPackage: $module?->isPackage ?: false,
-			moduleNamespace: $module?->namespace,
-		);
+		$this->generator->createModel($entity, $module);
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -240,17 +246,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': creating component ');
 		$this->printer->printText($component->name, 'white');
-		$this->generator->createComponent(
-			$component->name,
-			$module?->name ?: 'App',
-			$component->entity,
-			$component->withTemplateName,
-			$component->type,
-			factory: match ($component->type) {
-				ComponentGenerator::TYPE_DATASET => CmsDatasetFactory::class,
-				default => null,
-			},
-		);
+		$this->generator->createComponent($component, $module ?: 'App');
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -261,7 +257,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': creating service ');
 		$this->printer->printText($service->name, 'white');
-		$this->generator->createService($service->name, $module?->name);
+		$this->generator->createService($service, $module);
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -282,7 +278,7 @@ class Processor
 	{
 		$this->printer->printText($module->name, 'white');
 		$this->printer->printText(': removing module ');
-		$this->generator->removeModule($module->name, $module->isPackage, $module->namespace);
+		$this->generator->removeModule($module);
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -293,7 +289,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing component ');
 		$this->printer->printText($component->name, 'white');
-		$this->generator->removeComponent($component->name, $module?->name);
+		$this->generator->removeComponent($component, $module);
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -304,7 +300,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing service ');
 		$this->printer->printText($service->name, 'white');
-		$this->generator->removeService($service->name, $module?->name);
+		$this->generator->removeService($service, $module);
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -315,7 +311,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing command ');
 		$this->printer->printText($command->name, 'white');
-		$this->generator->removeCommand($command->name, $module?->name);
+		$this->generator->removeCommand($command, $module);
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -326,7 +322,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing entity ');
 		$this->printer->printText($entity->name, 'white');
-		$this->generator->removeModel($entity->name, $module?->name);
+		$this->generator->removeModel($entity, $module);
 		$this->count++;
 		$this->printer->printOk();
 	}

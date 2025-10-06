@@ -6,7 +6,6 @@ namespace Webovac\Generator;
 
 use DateTimeInterface;
 use Nette\DI\Attributes\Inject;
-use Nette\InvalidArgumentException;
 use Nette\PhpGenerator\Attribute;
 use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\Method;
@@ -17,128 +16,88 @@ use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
 use Nextras\Dbal\Utils\DateTimeImmutable;
 use Nextras\Orm\Collection\ICollection;
+use Nextras\Orm\Mapper\Dbal\Conventions\Conventions;
 use Nextras\Orm\Mapper\Dbal\Conventions\IConventions;
-use Nextras\Orm\Relationships\ManyHasMany;
-use Nextras\Orm\Relationships\OneHasMany;
 use Nextras\Orm\StorageReflection\StringHelper;
 use Stepapo\Model\Data\Collection;
 use Stepapo\Model\Data\DataRepository;
 use Stepapo\Model\Data\Item;
-use Stepapo\Model\Definition\Config\Foreign;
-use Stepapo\Model\Definition\Config\Table;
-use Stepapo\Model\Orm\InternalProperty;
-use Stepapo\Model\Orm\PrivateProperty;
+use Tracy\Dumper;
 use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Model\CmsMapper;
 use Webovac\Core\Model\CmsRepository;
-use Webovac\Generator\Config\Implement;
+use Webovac\Generator\Config\Entity;
+use Webovac\Generator\Config\File;
+use Webovac\Generator\Config\Module;
+use Webovac\Generator\Lib\Writer;
 
 
 class ModelGenerator
 {
 	protected string $namespace;
 	protected string $modelNamespace;
+	protected string $name;
 	protected string $lname;
 	protected string $uname;
+	protected string $traitName;
+	private Writer $writer;
 
 
 	public function __construct(
-		private string $name,
 		private string $appNamespace,
 		private string $buildNamespace,
-		private ?string $moduleNamespace = null,
-		private ?string $module = null,
-		private bool $withTraits = true,
-		private bool $withConventions = false,
-		private string $mode = Generator::MODE_ADD,
+		private Entity $entity,
+		private ?Module $module = null,
 	) {
+		$this->name = $this->entity->name;
 		$this->lname = lcfirst($this->name);
-		$this->uname = StringHelper::underscore($name);
+		$this->uname = StringHelper::underscore($this->name);
 		$this->modelNamespace = "$this->buildNamespace\Model\\$this->name";
-		$this->namespace = $this->moduleNamespace . ($this->module ? "\\$this->module" : '') . "\Model\\$this->name";
+		$this->namespace = $this->module?->namespace
+			? "{$this->module->namespace}\\{$this->module->name}\Model\\$this->name"
+			: "$this->appNamespace\Model\\$this->name";
+		$this->traitName = $this->entity->withTraits && $this->module ? "{$this->module->name}{$this->name}" : $this->name;
+		$this->writer = new Writer;
 	}
 
 
-	public function createEntity(array $implements = []): PhpFile
+	public function createEntity(): PhpFile
 	{
+		$file = File::createPhp(
+			name: $this->name,
+			namespace: $this->modelNamespace,
+			extends: CmsEntity::class,
+		);
 		$getDataClassMethod = (new Method('getDataClass'))
 			->setPublic()
 			->setReturnType('string')
 			->setBody("return {$this->name}Data::class;");
-		$class = (new ClassType("$this->name"))
-			->setExtends(CmsEntity::class)
+		$namespace = Arrays::first($file->getNamespaces());
+		$class = Arrays::first($namespace->getClasses());
+		$namespace
+			->addUse("$this->modelNamespace\\{$this->name}Data");
+		$class
 			->addMember($getDataClassMethod)
 			->addComment("@method {$this->name}Data getData(bool \$neon = false, bool \$forCache = false, ?array \$select = null)");
-		$namespace = (new PhpNamespace($this->modelNamespace))
-			->addUse(CmsEntity::class)
-			->addUse("$this->modelNamespace\\{$this->name}Data")
-			->add($class);
-		foreach ($implements as $implement) {
-			$class->addImplement($implement->class);
-			$namespace->addUse($implement->class);
-		}
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-		return $file;
-	}
-
-
-	public function updateEntity(string $path, array $implements = []): PhpFile
-	{
-		return $this->updateFile(
-			$path,
-			"$this->namespace\\$this->module$this->name",
-			$implements,
-		);
-	}
-
-
-	public function createEntityTrait(): PhpFile
-	{
-		$class = ($this->withTraits ? new TraitType("$this->module$this->name") : new ClassType($this->name));
-
-		$namespace = (new PhpNamespace($this->namespace))
-			->add($class)
-			->addUse(DateTimeImmutable::class);
-
-		if (!$this->withTraits) {
-			$class->setExtends(CmsEntity::class);
-			$namespace->addUse(CmsEntity::class);
-		}
-
-		if ($this->name !== 'Person') {
-			$namespace->addUse("$this->buildNamespace\Model\Person\Person");
-		}
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
 		return $file;
 	}
 
 
 	public function createMapper(): PhpFile
 	{
+		$file = File::createPhp(
+			name: "{$this->name}Mapper",
+			namespace: $this->modelNamespace,
+			extends: CmsMapper::class,
+		);
+		$namespace = Arrays::first($file->getNamespaces());
+		$class = Arrays::first($namespace->getClasses());
 		$getTableNameMethod = (new Method('getTableName'))
 			->setPublic()
 			->setReturnType('string')
 			->setBody("return '$this->uname';");
-
-		$class = (new ClassType("{$this->name}Mapper"))
-			->setExtends(CmsMapper::class)
-			->addMember($getTableNameMethod);
-
-		$namespace = (new PhpNamespace($this->modelNamespace))
-			->addUse(CmsMapper::class)
-			->add($class);
-
-		if ($this->module) {
-			$trait =  "$this->namespace\\$this->module{$this->name}Mapper";
-			$class->addTrait($trait);
-			$namespace->addUse($trait);
-		}
-
-		if ($this->withConventions) {
+		$class->addMember($getTableNameMethod);
+		if ($this->entity->withConventions) {
 			$createConventionsMethod = (new Method("{$this->name}Conventions"))
 				->setProtected()
 				->setReturnType(IConventions::class)
@@ -155,54 +114,26 @@ EOT
 			$class->addMember($createConventionsMethod);
 			$namespace->addUse(IConventions::class);
 		}
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
 		return $file;
 	}
 
 
-	public function updateMapper(string $path): PhpFile
+	public function createRepository(): PhpFile
 	{
-		return $this->updateFile(
-			$path,
-			"$this->namespace\\$this->module{$this->name}Mapper",
+		$file = File::createPhp(
+			name: "{$this->name}Repository",
+			namespace: $this->modelNamespace,
+			extends: CmsRepository::class,
 		);
-	}
-
-
-	public function createMapperTrait(): PhpFile
-	{
-		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}Mapper") : new ClassType("{$this->name}Mapper"));
-
-		$namespace = (new PhpNamespace($this->namespace))
-			->add($class);
-
-		if (!$this->withTraits) {
-			$class->setExtends(CmsMapper::class);
-			$namespace->addUse(CmsMapper::class);
-		}
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
-	}
-
-
-	public function createRepository(array $implements = []): PhpFile
-	{
+		$namespace = Arrays::first($file->getNamespaces());
+		$class = Arrays::first($namespace->getClasses());
 		$getEntityClassNamesMethod = (new Method('getEntityClassNames'))
 			->setPublic()
 			->setStatic()
 			->setReturnType('array')
 			->setBody("return [$this->name::class];");
 
-		$class = (new ClassType("{$this->name}Repository"))
-			->setExtends(CmsRepository::class)
-			->addMember($getEntityClassNamesMethod);
-
+		$class->addMember($getEntityClassNamesMethod);
 		$class
 			->addComment("@method $this->name[]|ICollection findAll()")
 			->addComment("@method $this->name[]|ICollection findBy(array \$conds)")
@@ -210,57 +141,14 @@ EOT
 			->addComment("@method $this->name|null getBy(array \$conds)")
 			->addComment("@method $this->name createFromData({$this->name}Data \$data, ?$this->name \$original = null, ?CmsEntity \$parent = null, ?string \$parentName = null, ?Person \$person = null, ?\DateTimeInterface \$date = null, bool \$skipDefaults = false, bool \$getOriginalByData = false)");
 
-		$namespace = (new PhpNamespace($this->modelNamespace))
-			->addUse(CmsRepository::class)
+		$namespace
 			->addUse(ICollection::class)
 			->addUse("$this->modelNamespace\\{$this->name}Data")
-			->addUse(CmsEntity::class)
-			->add($class);
+			->addUse(CmsEntity::class);
 
 		if ($this->name !== 'Person') {
 			$namespace->addUse("$this->buildNamespace\Model\Person\Person");
 		}
-
-		if ($this->module) {
-			$trait = "$this->namespace\\$this->module{$this->name}Repository";
-			$class->addTrait($trait);
-			$namespace->addUse($trait);
-		}
-		foreach ($implements as $implement) {
-			$class->addImplement($implement->class);
-			$namespace->addUse($implement->class);
-		}
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
-	}
-
-
-	public function updateRepository(string $path, array $implements = []): PhpFile
-	{
-		return $this->updateFile(
-			$path,
-			"$this->namespace\\$this->module{$this->name}Repository",
-			$implements,
-		);
-	}
-
-
-	public function createRepositoryTrait(): PhpFile
-	{
-		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}Repository") : new ClassType("{$this->name}Repository"));
-
-		$namespace = (new PhpNamespace($this->namespace))
-			->add($class);
-
-		if (!$this->withTraits) {
-			$class->setExtends(CmsRepository::class);
-			$namespace->addUse(CmsRepository::class);
-		}
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
 
 		return $file;
 	}
@@ -268,7 +156,13 @@ EOT
 
 	public function createConventions(): PhpFile
 	{
-		$conventions = 'Nextras\Orm\Mapper\Dbal\Conventions\Conventions';
+		$file = File::createPhp(
+			name: "{$this->name}Repository",
+			namespace: $this->modelNamespace,
+			extends: Conventions::class,
+		);
+		$namespace = Arrays::first($file->getNamespaces());
+		$class = Arrays::first($namespace->getClasses());
 		$getStoragePrimaryKeyMethod = (new Method('getStoragePrimaryKey'))
 			->setPublic()
 			->setReturnType('array')
@@ -288,49 +182,94 @@ return [
 ];
 EOT
 			);
-		$class = (new ClassType("{$this->name}Conventions"))
-			->setExtends($conventions)
+		$class
 			->addMember($getStoragePrimaryKeyMethod)
 			->addMember($getDefaultMappingsMethod);
-		$namespace = (new PhpNamespace($this->namespace))
-			->addUse($conventions)
-			->add($class);
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
 		return $file;
 	}
 
 
 	public function createDataObject(): PhpFile
 	{
-		$class = (new ClassType("{$this->name}Data"))
-			->setExtends(Item::class);
-		$namespace = (new PhpNamespace($this->modelNamespace))
-			->addUse(Item::class)
-			->add($class);
-		if ($this->module) {
-			$trait =  "$this->namespace\\$this->module{$this->name}Data";
-			$class->addTrait($trait);
-			$namespace->addUse($trait);
-		}
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-		return $file;
-	}
-
-
-	public function updateDataObject(string $path): PhpFile
-	{
-		return $this->updateFile(
-			$path,
-			"$this->namespace\\$this->module{$this->name}Data",
+		return File::createPhp(
+			name: "{$this->name}Data",
+			namespace: $this->modelNamespace,
+			extends: Item::class,
 		);
 	}
 
 
-	public function generateDataObjectTrait(): PhpFile
+	public function createDataRepository(): ?PhpFile
 	{
-		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}Data") : new ClassType("{$this->name}Data"))
+		$file = File::createPhp(
+			name: "{$this->name}DataRepository",
+			namespace: $this->modelNamespace,
+			extends: DataRepository::class,
+		);
+		$namespace = Arrays::first($file->getNamespaces());
+		$class = Arrays::first($namespace->getClasses());
+		$class
+			->addComment("@method {$this->name}Data[]|Collection findByKeys(array \$keys)")
+			->addComment("@method {$this->name}Data|null getByKey(mixed \$key)");
+		$namespace
+			->addUse(Collection::class)
+			->addUse("$this->modelNamespace\\{$this->name}Data");
+		return $file;
+	}
+
+
+	public function createEntityTrait(): PhpFile
+	{
+		$file = File::createPhp(
+			name: $this->traitName,
+			namespace: $this->modelNamespace,
+			extends: !$this->entity->withTraits ? null : CmsEntity::class,
+			type: $this->entity->withTraits ? TraitType::class : ClassType::class,
+		);
+		$namespace = Arrays::first($file->getNamespaces());
+		$namespace
+			->addUse(DateTimeImmutable::class);
+
+		if ($this->name !== 'Person') {
+			$namespace->addUse("$this->buildNamespace\Model\Person\Person");
+		}
+		return $file;
+	}
+
+
+	public function createMapperTrait(): PhpFile
+	{
+		return File::createPhp(
+			name: "{$this->traitName}Mapper",
+			namespace: $this->modelNamespace,
+			extends: !$this->entity->withTraits ? null : CmsMapper::class,
+			type: $this->entity->withTraits ? TraitType::class : ClassType::class,
+		);
+	}
+
+
+	public function createRepositoryTrait(): PhpFile
+	{
+		return File::createPhp(
+			name: "{$this->traitName}Repository",
+			namespace: $this->modelNamespace,
+			extends: !$this->entity->withTraits ? null : CmsRepository::class,
+			type: $this->entity->withTraits ? TraitType::class : ClassType::class,
+		);
+	}
+
+
+	public function createDataObjectTrait(): PhpFile
+	{
+		$file = File::createPhp(
+			name: "{$this->traitName}Data",
+			namespace: $this->modelNamespace,
+			extends: !$this->entity->withTraits ? null : Item::class,
+			type: $this->entity->withTraits ? TraitType::class : ClassType::class,
+		);
+		$namespace = Arrays::first($file->getNamespaces());
+		$class = Arrays::first($namespace->getClasses());
+		$class
 			->setProperties([
 				(new Property('id'))->setPublic()->setType('int')->setNullable(),
 				(new Property('createdByPerson'))->setPublic()->setType('int|string')->setNullable(),
@@ -338,74 +277,48 @@ EOT
 				(new Property('createdAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable(),
 				(new Property('updatedAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable(),
 			]);
-
-		$namespace = (new PhpNamespace($this->namespace))
-			->add($class);
-
-		if (!$this->withTraits) {
-			$class->setExtends(Item::class);
-			$namespace->addUse(Item::class);
-		}
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
 		return $file;
-	}
-
-
-	public function createDataRepository(): ?PhpFile
-	{
-		if ($this->mode === Generator::MODE_REMOVE) {
-			return null;
-		}
-		$class = (new ClassType("{$this->name}DataRepository"))
-			->setExtends(DataRepository::class);
-		$class
-			->addComment("@method {$this->name}Data[]|Collection findByKeys(array \$keys)")
-			->addComment("@method {$this->name}Data|null getByKey(mixed \$key)");
-		$namespace = (new PhpNamespace($this->modelNamespace))
-			->addUse(DataRepository::class)
-			->addUse(Collection::class)
-			->addUse("$this->modelNamespace\\{$this->name}Data")
-			->add($class);
-		if ($this->module) {
-			$trait = "$this->namespace\\$this->module{$this->name}DataRepository";
-			$class->addTrait($trait);
-			$namespace->addUse($trait);
-		}
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
-	}
-
-
-	public function updateDataRepository(string $path): PhpFile
-	{
-		return $this->updateFile(
-			$path,
-			"$this->namespace\\$this->module{$this->name}DataRepository",
-		);
 	}
 
 
 	public function createDataRepositoryTrait(): PhpFile
 	{
-		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}DataRepository") : new ClassType("{$this->name}DataRepository"));
+		return File::createPhp(
+			name: "{$this->traitName}DataRepository",
+			namespace: $this->modelNamespace,
+			extends: !$this->entity->withTraits ? null : DataRepository::class,
+			type: $this->entity->withTraits ? TraitType::class : ClassType::class,
+		);
+	}
 
-		$namespace = (new PhpNamespace($this->namespace))
-			->add($class);
 
-		if (!$this->withTraits) {
-			$class->setExtends(DataRepository::class);
-			$namespace->addUse(DataRepository::class);
-		}
+	public function updateEntity(string $path): PhpFile
+	{
+		return $this->updateFile($path, "$this->namespace\\{$this->traitName}", $this->entity->entityImplements);
+	}
 
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
 
-		return $file;
+	public function updateMapper(string $path): PhpFile
+	{
+		return $this->updateFile($path, "$this->namespace\\{$this->traitName}Mapper");
+	}
+
+
+	public function updateRepository(string $path): PhpFile
+	{
+		return $this->updateFile($path, "$this->namespace\\{$this->traitName}Repository", $this->entity->repositoryImplements);
+	}
+
+
+	public function updateDataObject(string $path): PhpFile
+	{
+		return $this->updateFile($path, "$this->namespace\\{$this->traitName}Data");
+	}
+
+
+	public function updateDataRepository(string $path): PhpFile
+	{
+		return $this->updateFile($path, "$this->namespace\\{$this->traitName}DataRepository");
 	}
 
 
@@ -419,22 +332,17 @@ EOT
 		/** @var TraitType|ClassType $class */
 		$class = Arrays::first($file->getClasses());
 		$propertyName = "{$this->lname}Repository";
-		$type = $this->withTraits ? "$this->modelNamespace\\{$this->name}DataRepository" : "$this->namespace\\{$this->name}DataRepository";
-		if ($this->mode === Generator::MODE_ADD) {
-			$namespace
-				->addUse($type)
-				->addUse(Inject::class);
-			$property = $class->hasProperty($propertyName)
-				? $class->getProperty($propertyName)
-				: $class->addProperty($propertyName);
-			$property
-				->setPublic()
-				->setType($type)
-				->setAttributes([new Attribute(Inject::class, [])]);
-		} elseif ($this->mode === Generator::MODE_REMOVE && $class->hasProperty($propertyName)) {
-			$namespace->removeUse($type);
-			$class->removeProperty($propertyName);
-		}
+		$type = $this->entity->withTraits ? "$this->modelNamespace\\{$this->name}DataRepository" : "$this->namespace\\{$this->name}DataRepository";
+		$namespace
+			->addUse($type)
+			->addUse(Inject::class);
+		$property = $class->hasProperty($propertyName)
+			? $class->getProperty($propertyName)
+			: $class->addProperty($propertyName);
+		$property
+			->setPublic()
+			->setType($type)
+			->setAttributes([new Attribute(Inject::class, [])]);
 
 		return $file;
 	}
@@ -451,14 +359,9 @@ EOT
 		$class = Arrays::first($file->getClasses());
 		$comment = "@property-read {$this->name}Repository \${$this->lname}Repository";
 		$comments = explode("\n", $class->getComment() ?: '');
-		$type = $this->withTraits ? "$this->modelNamespace\\{$this->name}Repository" : "$this->namespace\\{$this->name}Repository";
-		if ($this->mode === Generator::MODE_ADD && !in_array($comment, $comments, true)) {
-			$namespace->addUse($type);
-			$comments[] = $comment;
-		} elseif ($this->mode === Generator::MODE_REMOVE && in_array($comment, $comments, true)) {
-			$namespace->removeUse($type);
-			$comments = array_diff($comments, [$comment]);
-		}
+		$type = $this->entity->withTraits ? "$this->modelNamespace\\{$this->name}Repository" : "$this->namespace\\{$this->name}Repository";
+		$namespace->addUse($type);
+		$comments[] = $comment;
 		sort($comments);
 		$class->setComment(implode("\n", $comments));
 
@@ -468,218 +371,6 @@ EOT
 
 	private function updateFile(string $path, string $trait, array $implements = []): PhpFile
 	{
-		if (!($content = @file_get_contents($path))) {
-			throw new InvalidArgumentException("Model with name '$this->name' does not exist.");
-		}
-		$file = PhpFile::fromCode($content);
-		if (!$this->module) {
-			return $file;
-		}
-		$class = Arrays::first($file->getClasses());
-		$namespace = Arrays::first($file->getNamespaces());
-		if ($this->mode === Generator::MODE_ADD && !array_key_exists($trait, $class->getTraits())) {
-			$class->addTrait($trait);
-			$namespace->addUse($trait);
-		} elseif ($this->mode === Generator::MODE_REMOVE && array_key_exists($trait, $class->getTraits())) {
-			$class->removeTrait($trait);
-			$namespace->removeUse($trait);
-		}
-		$alreadyImplements = $class->getImplements();
-		foreach ($implements as $implement) {
-			if (in_array($implement->class, $alreadyImplements, true)) {
-				continue;
-			}
-			$class->addImplement($implement->class);
-			$namespace->addUse($implement->class);
-		}
-		return $file;
-	}
-
-
-	/** @param Implement[] $implements */
-	public function checkFileImplements(string $path, array $implements = []): PhpFile
-	{
-		if (!($content = @file_get_contents($path))) {
-			throw new InvalidArgumentException("Model with name '$this->name' does not exist.");
-		}
-		$file = PhpFile::fromCode($content);
-		$class = Arrays::first($file->getClasses());
-		$namespace = Arrays::first($file->getNamespaces());
-		$alreadyImplements = $class->getImplements();
-		foreach ($implements as $implement) {
-			foreach ($implement->requires as $require) {
-				if (!in_array($require, $alreadyImplements, true)) {
-					$class->removeImplement($implement->class);
-					$namespace->removeUse($implement->class);
-				}
-			}
-		}
-		$sortedImplements = $class->getImplements();
-		sort($sortedImplements);
-		$class->setImplements($sortedImplements);
-		return $file;
-	}
-
-
-	public function getEntityComments(string $path, Table $table): ?string
-	{
-		if (!($content = @file_get_contents($path))) {
-			return null;
-		}
-		$file = PhpFile::fromCode($content);
-		/** @var ClassType $class */
-		$class = Arrays::first($file->getClasses());
-		return $class->getComment();
-	}
-
-
-	public function createEntityProperties(string $path, Table $table): PhpFile
-	{
-		if (!($content = @file_get_contents($path))) {
-			throw new InvalidArgumentException("Model with name '$this->name' does not exist.");
-		}
-		$file = PhpFile::fromCode($content);
-		/** @var PhpNamespace $namespace */
-		$namespace = Arrays::first($file->getNamespaces());
-		/** @var ClassType $class */
-		$class = Arrays::first($file->getClasses());
-		$comments = explode("\n", $class->getComment() ?: '');
-		foreach ($comments as $key => $comment) {
-			if (str_contains($comment, '@property')) {
-				unset($comments[$key]);
-			}
-		}
-		foreach ($table->columns as $column) {
-			$foreign = $table->foreignKeys[$column->name] ?? null;
-			$c = [];
-			$c['property'] = '@property';
-			$c['type'] = $column->getPhpType($foreign);
-			if ($column->type === 'datetime') {
-				$namespace->addUse(DateTimeImmutable::class);
-			}
-			$c['name'] = "\${$column->getPhpName($foreign)}";
-			if (($default = $column->getPhpDefault()) !== null) {
-				$c['default'] = "{default $default}";
-			}
-			$isPrimary = $table->primaryKey && in_array($column->name, $table->primaryKey->columns, true);
-			if ($isPrimary) {
-				$c['primary'] = "{primary}";
-			}
-			if ($foreign) {
-				$c['foreign'] = "{m:1 {$foreign->getPhpTable()}" . ($foreign->reverseName ? "::\$$foreign->reverseName" : ", oneSided=true") . "}";
-				if ($table->name !== $foreign->table) {
-					$use = $this->module
-						? "$this->appNamespace\\Module\\{$this->module}\\Model\\{$foreign->getPhpTable()}\\{$foreign->getPhpTable()}"
-						: "$this->buildNamespace\\Model\\{$foreign->getPhpTable()}\\{$foreign->getPhpTable()}";
-					$namespace->addUse($use);
-				}
-			}
-			if ($column->private) {
-				$namespace->addUse(PrivateProperty::class);
-			}
-			if ($column->internal) {
-				$namespace->addUse(InternalProperty::class);
-			}
-			$comment = implode(' ', $c);
-			if (!in_array($c, $comments, true)) {
-				$comments[] = $comment;
-			}
-		}
-		$class->setComment(implode("\n", $comments));
-		return $file;
-	}
-
-
-	public function createEntityPropertyManyHasMany(string $path, Foreign $from, Foreign $to, bool $isMain = false): PhpFile
-	{
-		$file = PhpFile::fromCode(@file_get_contents($path));
-		/** @var PhpNamespace $namespace */
-		$namespace = Arrays::first($file->getNamespaces());
-		/** @var ClassType $class */
-		$class = Arrays::first($file->getClasses());
-		$comments = explode("\n", $class->getComment() ?: '');
-		$c = [];
-		$c['property'] = '@property';
-		$c['type'] = "ManyHasMany|{$to->getPhpTable()}[]";
-		$c['name'] = "\$" . ($from->reverseName ? "$from->reverseName" : (StringHelper::camelize($to->table) . "s"));
-		$c['foreign'] = "{m:m {$to->getPhpTable()}" . ($to->reverseName ? "::\$$to->reverseName" : "") . ($to->reverseOrder ? ", orderBy=$to->reverseOrder" : "") . ($isMain ? ", isMain=true" : "") . ($to->reverseName ? "" : ", oneSided=true") ."}";
-		if ($from->table !== $to->table) {
-			$use = $this->module
-				? "$this->appNamespace\\Module\\{$this->module}\\Model\\{$to->getPhpTable()}\\{$to->getPhpTable()}"
-				: "$this->buildNamespace\\Model\\{$to->getPhpTable()}\\{$to->getPhpTable()}";
-			$namespace->addUse($use);
-		}
-		$comment = implode(' ', $c);
-		if (!in_array($c, $comments, true)) {
-			$comments[] = $comment;
-		}
-		$class->setComment(implode("\n", $comments));
-		$namespace->addUse(ManyHasMany::class);
-		return $file;
-	}
-
-
-	public function createEntityPropertyOneHasMany(string $path, Table $table, Foreign $foreign): PhpFile
-	{
-		$file = PhpFile::fromCode(@file_get_contents($path));
-		/** @var PhpNamespace $namespace */
-		$namespace = Arrays::first($file->getNamespaces());
-		/** @var ClassType $class */
-		$class = Arrays::first($file->getClasses());
-		$comments = explode("\n", $class->getComment() ?: '');
-		$c = [];
-		$c['property'] = '@property';
-		$c['type'] = "OneHasMany|{$table->getPhpName()}[]";
-		$c['name'] = "\$" . ($foreign->reverseName ? "$foreign->reverseName" : (StringHelper::camelize($table->name) . "s"));
-		$c['foreign'] = "{1:m {$table->getPhpName()}::$" . StringHelper::camelize(str_replace('_id', '', $foreign->keyColumn)) . ($foreign->reverseOrder ? ", orderBy=$foreign->reverseOrder" : "") . "}";
-		if ($table->name !== $foreign->table) {
-			$use = $this->module
-				? "$this->appNamespace\\Module\\{$this->module}\\Model\\{$table->getPhpName()}\\{$table->getPhpName()}"
-				: "$this->buildNamespace\\Model\\{$table->getPhpName()}\\{$table->getPhpName()}";
-			$namespace->addUse($use);
-		}
-		$comment = implode(' ', $c);
-		if (!in_array($c, $comments, true)) {
-			$comments[] = $comment;
-		}
-		$class->setComment(implode("\n", $comments));
-		$namespace->addUse(OneHasMany::class);
-		return $file;
-	}
-
-
-	public function sortEntityProperties(string $path): PhpFile
-	{
-		$file = PhpFile::fromCode(@file_get_contents($path));
-		/** @var ClassType $class */
-		$class = Arrays::first($file->getClasses());
-		$comments = explode("\n", $class->getComment() ?: '');
-		$c = [];
-		foreach ($comments as $comment) {
-			if (str_contains($comment, '{primary}')) {
-				$c['primary'][] = $comment;
-			} elseif (str_contains($comment, 'DateTimeImmutable')) {
-				$c['date'][] = $comment;
-			} elseif (str_contains($comment, 'm:1')) {
-				$c['m:1'][] = $comment;
-			} elseif (str_contains($comment, '1:m')) {
-				$c['1:m'][] = $comment;
-			} elseif (str_contains($comment, 'm:m')) {
-				$c['m:m'][] = $comment;
-			} elseif (str_contains($comment, '@property')) {
-				$c['simple'][] = $comment;
-			} else {
-				$c['other'][] = $comment;
-			}
-		}
-		$comments = [];
-		foreach (['primary', 'simple', 'date', 'm:1', '1:m', 'm:m', 'other'] as $type) {
-			if (isset($c[$type])) {
-				sort($c[$type]);
-				$comments = $comments ? array_merge($comments, [''], $c[$type]) : $c[$type];
-			}
-		}
-		$class->setComment(implode("\n", $comments));
-		return $file;
+		return $this->writer->updateFile($path, $trait, $implements);
 	}
 }

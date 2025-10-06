@@ -13,9 +13,12 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\Utils\ArrayHash;
 use Nette\Utils\Arrays;
+use PhpParser\Node\Expr\AssignOp\Mod;
 use Stepapo\Dataset\Control\Dataset\DatasetControl;
 use Stepapo\Utils\Factory;
 use Webovac\Core\Attribute\RequiresEntity;
+use Webovac\Generator\Config\Component;
+use Webovac\Generator\Config\Module;
 
 
 class ComponentGenerator
@@ -24,6 +27,7 @@ class ComponentGenerator
 	public const TYPE_DATASET = 'dataset';
 	public const TYPE_MENU = 'menu';
 
+	private string $name;
 	private string $lname;
 	private string $namespace;
 	private string $entityName;
@@ -31,22 +35,19 @@ class ComponentGenerator
 
 
 	public function __construct(
-		private string $name,
 		private string $appNamespace,
-		private ?string $module = null,
-		private ?string $entity = null,
-		private bool $withTemplateName = false,
-		private ?string $type = null,
-		private ?string $factory = null,
+		private Component $component,
+		private ?Module $module = null,
 		private string $mode = Generator::MODE_ADD,
 	) {
-		if ($this->entity) {
-			$parts = explode('\\', $this->entity);
+		if ($this->component->entity) {
+			$parts = explode('\\', $this->component->entity);
 			$this->entityName = Arrays::last($parts);
 			$this->lentityName = lcfirst($this->entityName);
 		}
-		$this->lname = lcfirst($name);
-		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\$this->module" : '') . "\Control\\$this->name";
+		$this->name = $this->component->name;
+		$this->lname = lcfirst($this->name);
+		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\{$this->module->name}" : '') . "\Control\\$this->name";
 	}
 
 
@@ -59,11 +60,11 @@ class ComponentGenerator
 			->addUse($base)
 			->add($class);
 
-		if ($this->entity) {
+		if ($this->component->entity) {
 			$class->addProperty($this->lentityName)
 				->setPublic()
-				->setType($this->entity);
-			$namespace->addUse($this->entity);
+				->setType($this->component->entity);
+			$namespace->addUse($this->component->entity);
 		}
 
 		$file = (new PhpFile())->setStrictTypes();
@@ -92,16 +93,16 @@ class ComponentGenerator
 			->addUse($base)
 			->add($class);
 
-		if ($this->entity) {
+		if ($this->component->entity) {
 			$constructMethod
 				->addPromotedParameter($this->lentityName)
 				->setPrivate()
-				->setType($this->entity);
+				->setType($this->component->entity);
 			$renderMethod->addBody("\$this->template->$this->lentityName = \$this->$this->lentityName;");
-			$namespace->addUse($this->entity);
+			$namespace->addUse($this->component->entity);
 		}
 
-		if ($this->withTemplateName) {
+		if ($this->component->withTemplateName) {
 			$class->addConstant('TEMPLATE_DEFAULT', 'default')
 				->setType('string');
 			$constructMethod
@@ -113,20 +114,20 @@ class ComponentGenerator
 		}
 
 		$renderMethod->addBody(
-			$this->withTemplateName
+			$this->component->withTemplateName
 				? "\$this->template->renderFile(\$this->moduleClass, self::class, \$this->templateName);"
 				: "\$this->template->render(__DIR__ . '/{$this->lname}.latte');"
 		);
 
-		if ($this->type) {
-			if ($this->factory) {
+		if ($this->component->type) {
+			if ($this->component->factory) {
 				$constructMethod
-					->addPromotedParameter($this->type . 'Factory')
+					->addPromotedParameter($this->component->type . 'Factory')
 					->setPrivate()
-					->setType($this->factory);
-				$namespace->addUse($this->factory);
+					->setType($this->component->factory);
+				$namespace->addUse($this->component->factory);
 			}
-			switch ($this->type) {
+			switch ($this->component->type) {
 				case self::TYPE_FORM:
 					$this->createFormMethods($namespace, $class);
 					break;
@@ -135,7 +136,6 @@ class ComponentGenerator
 					break;
 			}
 		}
-
 
 		$file = (new PhpFile)->setStrictTypes();
 		$file->addNamespace($namespace);
@@ -157,14 +157,14 @@ class ComponentGenerator
 			->add($class)
 			->addUse(Factory::class);
 
-		if ($this->entity) {
+		if ($this->component->entity) {
 			$createMethod
 				->addParameter($this->lentityName)
-				->setType($this->entity);
-			$namespace->addUse($this->entity);
+				->setType($this->component->entity);
+			$namespace->addUse($this->component->entity);
 		}
 
-		if ($this->withTemplateName) {
+		if ($this->component->withTemplateName) {
 			$createMethod
 				->addParameter('moduleClass', new Literal("{$this->module}::class"))
 				->setType('string');
@@ -188,9 +188,9 @@ class ComponentGenerator
 
 
 EOT;
-		if ($this->type) {
+		if ($this->component->type) {
 			$latte .= <<<EOT
-{control {$this->type}}
+{control {$this->component->type}}
 
 EOT;
 		}
@@ -237,7 +237,7 @@ EOT;
 			$createComponentMethod
 				->setPublic()
 				->setReturnType($control)
-				->setBody($this->entity
+				->setBody($this->component->entity
 					? <<<EOT
 assert(\$this->entity instanceof $this->entityName);
 return \$this->$this->lname->create(\$this->entity);
@@ -249,10 +249,10 @@ EOT);
 			$namespace
 				->addUse($factory)
 				->addUse($control);
-			if ($this->entity) {
+			if ($this->component->entity) {
 				$createComponentMethod->addAttribute(RequiresEntity::class, [new Literal("$this->entityName::class")]);
 				$namespace->addUse(RequiresEntity::class);
-				$namespace->addUse($this->entity);
+				$namespace->addUse($this->component->entity);
 			}
 		} else {
 			$constructMethod->removeParameter($this->lname);
@@ -271,8 +271,8 @@ EOT);
 			->setPublic()
 			->setReturnType(Form::class)
 			->addBody(
-				$this->factory
-					? "\$form = \$this->{$this->type}Factory->create();"
+				$this->component->factory
+					? "\$form = \$this->{$this->component->type}Factory->create();"
 					: "\$form = new Form;"
 			)
 			->addBody("\$form->onSuccess[] = [\$this, 'formSucceeded'];")
@@ -307,8 +307,8 @@ EOT;
 			->setPublic()
 			->setReturnType(DatasetControl::class)
 			->addBody(
-				$this->factory
-					? "return \$this->{$this->type}Factory->create(\n$factoryBody\n);"
+				$this->component->factory
+					? "return \$this->{$this->component->type}Factory->create(\n$factoryBody\n);"
 					: "return Dataset::createFromNeon(\n$factoryBody\n);"
 			);
 

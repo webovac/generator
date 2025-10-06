@@ -4,11 +4,12 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
-use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;
-use Nette\PhpGenerator\PhpNamespace;
-use Stepapo\Utils\Service;
+use Nette\Utils\Arrays;
+use Webovac\Generator\Config\File;
+use Webovac\Generator\Config\Module;
+use Webovac\Generator\Config\Service;
 
 
 class ServiceGenerator
@@ -17,27 +18,24 @@ class ServiceGenerator
 
 
 	public function __construct(
-		private string $name,
 		private string $appNamespace,
-		private ?string $module = null,
+		private Service $service,
+		private ?Module $module = null,
 	) {
-		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\{$this->module}" : '') . "\Lib";
+		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\{$this->module->name}" : '') . "\Lib";
 	}
 
 
 	public function createService(): PhpFile
 	{
-		$class = (new ClassType("{$this->name}"))
-			->addImplement(Service::class)
-			->addMember((new Method('__construct'))->setPublic());
-
-		$namespace = (new PhpNamespace("{$this->namespace}"))
-			->add($class)
-			->addUse(Service::class);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
+		$file = File::createPhp(
+			name: $this->service->name,
+			namespace: $this->namespace,
+			implements: [Service::class],
+		);
+		$namespace = Arrays::first($file->getNamespaces());
+		$class = Arrays::first($namespace->getClasses());
+		$class->addMember((new Method('__construct'))->setPublic());
 		return $file;
 	}
 }

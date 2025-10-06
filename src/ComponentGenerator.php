@@ -50,7 +50,7 @@ class ComponentGenerator
 	}
 
 
-	public function generateTemplate(string $base): PhpFile
+	public function createTemplate(string $base): PhpFile
 	{
 		$class = (new ClassType("{$this->name}Template"))
 			->setExtends($base);
@@ -73,7 +73,7 @@ class ComponentGenerator
 	}
 
 
-	public function generateControl(string $base): PhpFile
+	public function createControl(string $base): PhpFile
 	{
 		$constructMethod = (new Method('__construct'))
 			->setPublic();
@@ -144,7 +144,7 @@ class ComponentGenerator
 	}
 
 
-	public function generateFactory(): PhpFile
+	public function createFactory(): PhpFile
 	{
 		$createMethod = (new Method('create'))
 			->setReturnType("$this->namespace\\{$this->name}Control");
@@ -181,7 +181,7 @@ class ComponentGenerator
 	}
 
 
-	public function generateLatte(): string
+	public function createLatte(): string
 	{
 		$latte = <<<EOT
 {templateType {$this->namespace}\\{$this->name}Template}
@@ -199,7 +199,7 @@ EOT;
 	}
 
 
-	public function generateDatasetNeon(): string
+	public function createDatasetNeon(): string
 	{
 		return <<<EOT
 collection: %collection%
@@ -210,7 +210,7 @@ EOT;
 	}
 
 
-	public function generateMenuNeon(): string
+	public function createMenuNeon(): string
 	{
 		return <<<EOT
 buttons:
@@ -219,7 +219,7 @@ EOT;
 	}
 
 
-	public function generateUpdatedMainComponent(string $path): PhpFile
+	public function updateMainComponent(string $path): PhpFile
 	{
 		$file = PhpFile::fromCode(file_get_contents($path));
 		$control = "$this->namespace\\{$this->name}Control";

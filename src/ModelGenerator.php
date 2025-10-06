@@ -59,7 +59,7 @@ class ModelGenerator
 	}
 
 
-	public function generateEntity(array $implements = []): PhpFile
+	public function createEntity(array $implements = []): PhpFile
 	{
 		$getDataClassMethod = (new Method('getDataClass'))
 			->setPublic()
@@ -73,11 +73,6 @@ class ModelGenerator
 			->addUse(CmsEntity::class)
 			->addUse("$this->modelNamespace\\{$this->name}Data")
 			->add($class);
-		if ($this->module) {
-			$trait = "$this->namespace\\$this->module$this->name";
-			$class->addTrait($trait);
-			$namespace->addUse($trait);
-		}
 		foreach ($implements as $implement) {
 			$class->addImplement($implement->class);
 			$namespace->addUse($implement->class);
@@ -88,18 +83,17 @@ class ModelGenerator
 	}
 
 
-	public function generateUpdatedEntity(string $path, array $implements = []): PhpFile
+	public function updateEntity(string $path, array $implements = []): PhpFile
 	{
-		return $this->modifyFile(
+		return $this->updateFile(
 			$path,
 			"$this->namespace\\$this->module$this->name",
 			$implements,
-			fn() => $this->generateEntity($implements),
 		);
 	}
 
 
-	public function generateEntityTrait(): PhpFile
+	public function createEntityTrait(): PhpFile
 	{
 		$class = ($this->withTraits ? new TraitType("$this->module$this->name") : new ClassType($this->name));
 
@@ -123,7 +117,7 @@ class ModelGenerator
 	}
 
 
-	public function generateMapper(): PhpFile
+	public function createMapper(): PhpFile
 	{
 		$getTableNameMethod = (new Method('getTableName'))
 			->setPublic()
@@ -169,17 +163,16 @@ EOT
 	}
 
 
-	public function generateUpdatedMapper(string $path): PhpFile
+	public function updateMapper(string $path): PhpFile
 	{
-		return $this->modifyFile(
+		return $this->updateFile(
 			$path,
 			"$this->namespace\\$this->module{$this->name}Mapper",
-			create: fn() => $this->generateMapper(),
 		);
 	}
 
 
-	public function generateMapperTrait(): PhpFile
+	public function createMapperTrait(): PhpFile
 	{
 		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}Mapper") : new ClassType("{$this->name}Mapper"));
 
@@ -198,7 +191,7 @@ EOT
 	}
 
 
-	public function generateRepository(array $implements = []): PhpFile
+	public function createRepository(array $implements = []): PhpFile
 	{
 		$getEntityClassNamesMethod = (new Method('getEntityClassNames'))
 			->setPublic()
@@ -244,18 +237,17 @@ EOT
 	}
 
 
-	public function generateUpdatedRepository(string $path, array $implements = []): PhpFile
+	public function updateRepository(string $path, array $implements = []): PhpFile
 	{
-		return $this->modifyFile(
+		return $this->updateFile(
 			$path,
 			"$this->namespace\\$this->module{$this->name}Repository",
 			$implements,
-			fn() => $this->generateRepository($implements),
 		);
 	}
 
 
-	public function generateRepositoryTrait(): PhpFile
+	public function createRepositoryTrait(): PhpFile
 	{
 		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}Repository") : new ClassType("{$this->name}Repository"));
 
@@ -274,7 +266,7 @@ EOT
 	}
 
 
-	public function generateConventions(): PhpFile
+	public function createConventions(): PhpFile
 	{
 		$conventions = 'Nextras\Orm\Mapper\Dbal\Conventions\Conventions';
 		$getStoragePrimaryKeyMethod = (new Method('getStoragePrimaryKey'))
@@ -309,7 +301,7 @@ EOT
 	}
 
 
-	public function generateDataObject(): PhpFile
+	public function createDataObject(): PhpFile
 	{
 		$class = (new ClassType("{$this->name}Data"))
 			->setExtends(Item::class);
@@ -320,14 +312,6 @@ EOT
 			$trait =  "$this->namespace\\$this->module{$this->name}Data";
 			$class->addTrait($trait);
 			$namespace->addUse($trait);
-		} else {
-			$class->setProperties([
-				(new Property('id'))->setPublic()->setType('int')->setNullable(),
-				(new Property('createdByPerson'))->setPublic()->setType('int|string')->setNullable(),
-				(new Property('updatedByPerson'))->setPublic()->setType('int|string')->setNullable(),
-				(new Property('createdAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable(),
-				(new Property('updatedAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable(),
-			]);
 		}
 		$file = (new PhpFile())->setStrictTypes();
 		$file->addNamespace($namespace);
@@ -335,12 +319,11 @@ EOT
 	}
 
 
-	public function generateUpdatedDataObject(string $path): PhpFile
+	public function updateDataObject(string $path): PhpFile
 	{
-		return $this->modifyFile(
+		return $this->updateFile(
 			$path,
 			"$this->namespace\\$this->module{$this->name}Data",
-			create: fn() => $this->generateDataObject(),
 		);
 	}
 
@@ -371,7 +354,7 @@ EOT
 	}
 
 
-	public function generateDataRepository(): ?PhpFile
+	public function createDataRepository(): ?PhpFile
 	{
 		if ($this->mode === Generator::MODE_REMOVE) {
 			return null;
@@ -398,17 +381,16 @@ EOT
 	}
 
 
-	public function generateUpdatedDataRepository(string $path): PhpFile
+	public function updateDataRepository(string $path): PhpFile
 	{
-		return $this->modifyFile(
+		return $this->updateFile(
 			$path,
 			"$this->namespace\\$this->module{$this->name}DataRepository",
-			create: fn() => $this->generateDataRepository(),
 		);
 	}
 
 
-	public function generateDataRepositoryTrait(): PhpFile
+	public function createDataRepositoryTrait(): PhpFile
 	{
 		$class = ($this->withTraits ? new TraitType("$this->module{$this->name}DataRepository") : new ClassType("{$this->name}DataRepository"));
 
@@ -427,7 +409,7 @@ EOT
 	}
 
 
-	public function generateUpdatedDataModel(string $path): PhpFile
+	public function updateDataModel(string $path): PhpFile
 	{
 		$file = PhpFile::fromCode(file_get_contents($path));
 
@@ -458,7 +440,7 @@ EOT
 	}
 
 
-	public function generateUpdatedModel(string $path): PhpFile
+	public function updateModel(string $path): PhpFile
 	{
 		$file = PhpFile::fromCode(file_get_contents($path));
 
@@ -484,13 +466,12 @@ EOT
 	}
 
 
-	private function modifyFile(string $path, string $trait, array $implements = [], ?callable $create = null): PhpFile
+	private function updateFile(string $path, string $trait, array $implements = []): PhpFile
 	{
-		$content = @file_get_contents($path);
-		if (!$content && (!$create || $this->mode !== Generator::MODE_ADD)) {
+		if (!($content = @file_get_contents($path))) {
 			throw new InvalidArgumentException("Model with name '$this->name' does not exist.");
 		}
-		$file = !$content ? $create() : PhpFile::fromCode($content);
+		$file = PhpFile::fromCode($content);
 		if (!$this->module) {
 			return $file;
 		}
@@ -526,12 +507,6 @@ EOT
 		$namespace = Arrays::first($file->getNamespaces());
 		$alreadyImplements = $class->getImplements();
 		foreach ($implements as $implement) {
-			if (!in_array($implement->class, $alreadyImplements, true)) {
-				$class->addImplement($implement->class);
-				$namespace->addUse($implement->class);
-			}
-		}
-		foreach ($implements as $implement) {
 			foreach ($implement->requires as $require) {
 				if (!in_array($require, $alreadyImplements, true)) {
 					$class->removeImplement($implement->class);
@@ -546,25 +521,10 @@ EOT
 	}
 
 
-	public function shouldEntityBeDeleted(PhpFile $entity): bool
-	{
-		if (!$this->module) {
-			return true;
-		}
-		/** @var ClassType $class */
-		$class = Arrays::first($entity->getClasses());
-		$hasPropertyAnnotation = false;
-		if (str_contains($class->getComment(), '@property')) {
-			$hasPropertyAnnotation = true;
-		}
-		return !$class->getTraits() && !$class->getProperties() && !$hasPropertyAnnotation;
-	}
-
-
 	public function getEntityComments(string $path, Table $table): ?string
 	{
 		if (!($content = @file_get_contents($path))) {
-			throw new InvalidArgumentException("Model with name '$this->name' does not exist.");
+			return null;
 		}
 		$file = PhpFile::fromCode($content);
 		/** @var ClassType $class */
@@ -573,7 +533,7 @@ EOT
 	}
 
 
-	public function generateEntityProperties(string $path, Table $table): PhpFile
+	public function createEntityProperties(string $path, Table $table): PhpFile
 	{
 		if (!($content = @file_get_contents($path))) {
 			throw new InvalidArgumentException("Model with name '$this->name' does not exist.");
@@ -630,7 +590,7 @@ EOT
 	}
 
 
-	public function generateEntityPropertyManyHasMany(string $path, Foreign $from, Foreign $to, bool $isMain = false): PhpFile
+	public function createEntityPropertyManyHasMany(string $path, Foreign $from, Foreign $to, bool $isMain = false): PhpFile
 	{
 		$file = PhpFile::fromCode(@file_get_contents($path));
 		/** @var PhpNamespace $namespace */
@@ -659,7 +619,7 @@ EOT
 	}
 
 
-	public function generateEntityPropertyOneHasMany(string $path, Table $table, Foreign $foreign): PhpFile
+	public function createEntityPropertyOneHasMany(string $path, Table $table, Foreign $foreign): PhpFile
 	{
 		$file = PhpFile::fromCode(@file_get_contents($path));
 		/** @var PhpNamespace $namespace */

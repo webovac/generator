@@ -25,7 +25,7 @@ class CommandGenerator
 	}
 
 
-	public function generateCommand(): PhpFile
+	public function createCommand(): PhpFile
 	{
 		$class = (new ClassType("{$this->name}"))
 			->addImplement(Command::class)

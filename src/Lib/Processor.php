@@ -40,12 +40,16 @@ class Processor
 		$this->printer->printLine('Files', 'aqua');
 		$this->printer->printSeparator();
 		try {
-			$new = $this->collector->getApp($folders);
+			$app = $this->collector->getApp($folders);
 			$old = $this->analyzer->getApp($appDir, $buildDir);
-			$this->processApp($new, $old);
+			$this->processApp($app, $old);
 			if ($this->count === 0) {
 				$this->printer->printLine('No changes');
 			}
+			$this->printer->printSeparator();
+			$this->printer->printText('Building... ');
+			$this->build($app);
+			$this->printer->printLine('OK', 'lime');
 			$this->printer->printSeparator();
 			$end = microtime(true);
 			$this->printer->printLine(sprintf("%d items | %0.3f s | OK", $this->count, $end - $start), 'lime');
@@ -61,6 +65,29 @@ class Processor
 	}
 
 
+	private function build(App $app): void
+	{
+		$this->generator->createBuild();
+		$entities = [];
+		foreach ($app->modules as $module) {
+			$this->generator->updateBuild($module);
+			foreach ($module->entities as $entity) {
+				if (!array_key_exists($entity->name, $entities)) {
+					$this->generator->createBuildEntity($entity);
+				}
+				$entities[$entity->name] = $entity->name;
+				$this->generator->updateBuildEntity($entity, $module);
+			}
+		}
+		# CHECK IMPLEMENTS
+		foreach ($app->modules as $module) {
+			foreach ($module->entities as $entity) {
+				$this->updateEntity($entity, $module);
+			}
+		}
+	}
+
+
 	private function processApp(App $new, App $old): void
 	{
 		$reset = false;
@@ -72,6 +99,9 @@ class Processor
 		}
 		# CHECK FOR CREATION
 		foreach ($new->modules as $module) {
+			if ($module->isPackage) {
+				continue;
+			}
 			if ($reset || !isset($old->modules[$module->name])) {
 				$this->createModule($module);
 			}
@@ -113,6 +143,9 @@ class Processor
 		}
 		# CHECK FOR REMOVAL
 		foreach ($old->modules as $module) {
+			if ($module->isPackage) {
+				continue;
+			}
 			if (!isset($new->modules[$module->name])) {
 				$this->removeModule($module);
 				continue;
@@ -155,12 +188,6 @@ class Processor
 				$this->removeCommand($command);
 			}
 		}
-		# CHECK IMPLEMENTS
-		foreach ($new->modules as $module) {
-			foreach ($module->entities as $entity) {
-				$this->updateEntity($entity, $module);
-			}
-		}
 	}
 
 
@@ -194,8 +221,6 @@ class Processor
 			$module?->name,
 			$entity->withTraits,
 			$entity->withConventions,
-			$entity->entityImplements,
-			$entity->repositoryImplements,
 			isPackage: $module?->isPackage ?: false,
 			moduleNamespace: $module?->namespace,
 		);
@@ -206,7 +231,7 @@ class Processor
 
 	private function updateEntity(Entity $entity, ?Module $module = null): void
 	{
-		$this->generator->checkModel($entity, $module);
+		$this->generator->checkEntity($entity, $module);
 	}
 
 
@@ -301,7 +326,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing entity ');
 		$this->printer->printText($entity->name, 'white');
-		$this->generator->removeModel($entity->name, $module?->name, $module?->isPackage ?: false);
+		$this->generator->removeModel($entity->name, $module?->name);
 		$this->count++;
 		$this->printer->printOk();
 	}

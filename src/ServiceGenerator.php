@@ -25,7 +25,7 @@ class ServiceGenerator
 	}
 
 
-	public function generateService(): PhpFile
+	public function createService(): PhpFile
 	{
 		$class = (new ClassType("{$this->name}"))
 			->addImplement(Service::class)

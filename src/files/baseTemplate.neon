@@ -1,0 +1,5 @@
+name: BaseTemplate
+namespace: %namespace%
+extends: Nette\Bridges\ApplicationLatte\Template
+attributes:
+	AllowDynamicProperties:

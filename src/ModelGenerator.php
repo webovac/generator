@@ -56,7 +56,7 @@ class ModelGenerator
 		$this->namespace = $this->module?->namespace
 			? "{$this->module->namespace}\\{$this->module->name}\Model\\$this->name"
 			: "$this->appNamespace\Model\\$this->name";
-		$this->traitName = $this->entity->withTraits && $this->module ? "{$this->module->name}{$this->name}" : $this->name;
+		$this->traitName = $this->entity->withTraits && $this->module ? "{$this->module->name}$this->name" : $this->name;
 		$this->writer = new Writer;
 	}
 

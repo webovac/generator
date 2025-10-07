@@ -1,0 +1,4 @@
+name: BaseTemplateFactory
+namespace: %namespace%
+extends: Nette\Bridges\ApplicationLatte\TemplateFactory
+implements: [Stepapo\Utils\Injectable]

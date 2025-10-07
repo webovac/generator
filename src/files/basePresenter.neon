@@ -1,0 +1,3 @@
+name: BasePresenter
+namespace: %namespace%
+extends: Nette\Application\UI\Presenter

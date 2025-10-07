@@ -1,0 +1,25 @@
+name: %name%
+namespace: %namespace%
+type: Nette\PhpGenerator\InterfaceType
+extends: Stepapo\Utils\Factory
+uses:
+	%entity%: [hide: %hideEntity%]
+	%moduleClass%: [hide: %hideTemplateName%]
+methods:
+	create:
+		visibility: null
+		returnType: %createMethod.returnType%
+		parameters:
+			%lentity%:
+				type: %entity%
+				hide: %hideEntity%
+			moduleClass:
+				type: string
+				hasValue: true
+				value: %moduleClass.value%
+				hide: %hideTemplateName%
+			templateName:
+				type: string
+				hasValue: true
+				value: %templateName.value%
+				hide: %hideTemplateName%

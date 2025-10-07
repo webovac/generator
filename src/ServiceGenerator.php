@@ -4,38 +4,52 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
-use Nette\PhpGenerator\Method;
-use Nette\PhpGenerator\PhpFile;
-use Nette\Utils\Arrays;
-use Webovac\Generator\Config\File;
 use Webovac\Generator\Config\Module;
 use Webovac\Generator\Config\Service;
 
 
 class ServiceGenerator
 {
+	private const string SERVICE = 'service';
+
 	private string $namespace;
+	private string $basePath;
+	private FileGenerator $fileGenerator;
 
 
 	public function __construct(
 		private string $appNamespace,
+		private string $appDir,
 		private Service $service,
 		private ?Module $module = null,
 	) {
 		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\{$this->module->name}" : '') . "\Lib";
+		$this->basePath = "$this->appDir/" . ($module ? "Module/{$module->name}/" : '') . "Lib";
+		$this->fileGenerator = new FileGenerator;
 	}
 
 
-	public function createService(): PhpFile
+	public function createService(): void
 	{
-		$file = File::createPhp(
-			name: $this->service->name,
-			namespace: $this->namespace,
-			implements: [Service::class],
-		);
-		$namespace = Arrays::first($file->getNamespaces());
-		$class = Arrays::first($namespace->getClasses());
-		$class->addMember((new Method('__construct'))->setPublic());
-		return $file;
+		$this->fileGenerator->write($this->getPath(self::SERVICE), $this->getConfig(self::SERVICE), [
+			'name' => $this->service->name,
+			'namespace' => $this->namespace,
+		]);
+	}
+
+
+	private function getPath(string $key): string
+	{
+		return match($key) {
+			self::SERVICE => "$this->basePath/{$this->service->name}.php",
+		};
+	}
+
+
+	private function getConfig(string $key): string
+	{
+		return match($key) {
+			self::SERVICE => __DIR__ . '/files/service.neon',
+		};
 	}
 }

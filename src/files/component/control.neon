@@ -1,0 +1,54 @@
+name: %name%
+namespace: %namespace%
+extends: Webovac\Core\Control\BaseControl
+comments: %comments%
+uses:
+	%entity%: [hide: %hideEntity%]
+	%factory%: [hide: %hideFactory%]
+	Nette\Application\UI\Form: [hide: %hideForm%]
+	Nette\Utils\ArrayHash: [hide: %hideForm%]
+	Stepapo\Dataset\Control\Dataset\DatasetControl: [hide: %hideDataset%]
+methods:
+	__construct:
+		promotedParameters:
+			%lentity%:
+				visibility: private
+				type: %entity%
+				hide: %hideEntity%
+			moduleClass:
+				visibility: private
+				type: string
+				hide: %hideTemplateName%
+			templateName:
+				visibility: private
+				type: string
+				hide: %hideTemplateName%
+			%factoryName%:
+				visibility: private
+				type: %factory%
+				hide: %hideFactory%
+	render:
+		returnType: void
+		body: %renderMethod.body%
+	createComponentForm:
+		returnType: Nette\Application\UI\Form
+		body: %createComponentFormMethod.body%
+		hide: %hideForm%
+	formSucceeded:
+		returnType: void
+		parameters:
+			form:
+				type: Nette\Application\UI\Form
+			values:
+				type: Nette\Utils\ArrayHash
+		hide: %hideForm%
+	createComponentDataset:
+		returnType: Stepapo\Dataset\Control\Dataset\DatasetControl
+		body: %createComponentDatasetMethod.body%
+		hide: %hideDataset%
+constants:
+	TEMPLATE_DEFAULT:
+		type: string
+		hasValue: true
+		value: default
+		hide: %hideTemplateName%

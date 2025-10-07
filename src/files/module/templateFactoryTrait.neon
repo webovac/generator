@@ -1,0 +1,9 @@
+name: %name%
+namespace: %namespace%
+type: Nette\PhpGenerator\TraitType
+uses:
+	Build\Control\BaseTemplate:
+	Nette\Bridges\ApplicationLatte\Template:
+methods:
+	%injectCreateMethod.name%:
+		body: %injectCreateMethod.body%

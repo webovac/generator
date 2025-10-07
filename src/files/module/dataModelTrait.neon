@@ -1,0 +1,3 @@
+name: %name%
+namespace: %namespace%
+type: Nette\PhpGenerator\TraitType

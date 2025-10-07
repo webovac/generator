@@ -1,0 +1,7 @@
+name: %name%
+namespace: %namespace%
+extends: Build\Control\BaseTemplate
+properties:
+	%lentity%:
+		type: %entity%
+		hide: %hideEntity%

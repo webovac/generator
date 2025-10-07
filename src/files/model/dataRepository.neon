@@ -1,0 +1,7 @@
+name: %name%
+namespace: %namespace%
+extends: Stepapo\Model\Data\DataRepository
+comments: %comments%
+uses:
+	Stepapo\Model\Data\Collection:
+	%data%:

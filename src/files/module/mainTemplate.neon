@@ -1,0 +1,3 @@
+name: %name%
+namespace: %namespace%
+extends: Build\Control\BaseTemplate

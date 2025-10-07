@@ -1,0 +1,10 @@
+name: %name%
+namespace: %namespace%
+extends: Webovac\Core\Model\CmsEntity
+comments: %comments%
+uses:
+	%data%:
+methods:
+	getDataClass:
+		returnType: string
+		body: %getDataClassMethod.body%

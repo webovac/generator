@@ -14,4 +14,5 @@ class Component extends Config
 	public ?string $entity = null;
 	public bool $withTemplateName = false;
 	public ?string $type = null;
+	public ?string $factory = null;
 }

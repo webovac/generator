@@ -1,0 +1,13 @@
+name: %name%
+namespace: %namespace%
+extends: Webovac\Core\Model\CmsRepository
+comments: %comments%
+uses:
+	%person%: [hide: %hidePerson%]
+	%data%:
+	Nextras\Orm\Collection\ICollection:
+methods:
+	getEntityClassNames:
+		static: true
+		returnType: array
+		body: %getEntityClassNamesMethod.body%

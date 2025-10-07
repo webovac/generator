@@ -4,29 +4,6 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
-use Build\Control\BaseTemplate;
-use Nette\Bridges\ApplicationLatte\Template;
-use Nette\DI\Attributes\Inject;
-use Nette\InvalidArgumentException;
-use Nette\PhpGenerator\Attribute;
-use Nette\PhpGenerator\ClassType;
-use Nette\PhpGenerator\InterfaceType;
-use Nette\PhpGenerator\Method;
-use Nette\PhpGenerator\PhpFile;
-use Nette\PhpGenerator\PhpNamespace;
-use Nette\PhpGenerator\TraitType;
-use Nette\Utils\Arrays;
-use Stepapo\Model\Data\Item;
-use Stepapo\Model\Definition\DefinitionGroup;
-use Stepapo\Model\Definition\HasDefinitionGroup;
-use Stepapo\Model\Manipulation\ManipulationGroup;
-use Stepapo\Utils\DI\StepapoExtension;
-use Stepapo\Utils\Factory;
-use Webovac\Core\Control\BaseControl;
-use Webovac\Core\Core;
-use Webovac\Core\MainModuleControl;
-use Webovac\Core\Model\CmsEntity;
-use Webovac\Generator\Config\File;
 use Webovac\Generator\Config\Module;
 use Webovac\Generator\Lib\Writer;
 
@@ -39,6 +16,7 @@ class ModuleGenerator
 	private string $mainControl;
 	private string $mainControlInterface;
 	private Writer $writer;
+	private FileGenerator $fileGenerator;
 
 
 	public function __construct(
@@ -50,281 +28,165 @@ class ModuleGenerator
 		$this->mainControl = "$this->namespace\Control\\$this->name\\{$this->name}Control";
 		$this->mainControlInterface = "$this->namespace\Control\\$this->name\I{$this->name}Control";
 		$this->writer = new Writer;
+		$this->fileGenerator = new FileGenerator;
 	}
 
 
-	public function createModule(): PhpFile
+	public function createModule(string $path): void
 	{
-		$getModuleNameMethod = (new Method('getModuleName'))
-			->setPublic()
-			->setStatic()
-			->setReturnType('string')
-			->setBody("return '$this->lname';");
-
-		$getCliSetupMethod = (new Method('getCliSetup'))
-			->setPublic()
-			->setStatic()
-			->setReturnType('array')
-			->setBody("return ['icon' => '', 'color' => 'white/blue'];");
-
-		$class = (new ClassType($this->name))
-			->setImplements([Module::class])
-			->addMember($getModuleNameMethod)
-			->addMember($getCliSetupMethod);
-
-		$namespace = (new PhpNamespace($this->namespace))
-			->addUse(Module::class)
-			->add($class);
-
-		if ($this->module->withDefinitionGroup) {
-			$getDefinitionGroupMethod = (new Method('getDefinitionGroup'))
-				->setPublic()
-				->setReturnType(DefinitionGroup::class)
-				->setBody(<<<EOT
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/module.neon', [
+			'name' => $this->name,
+			'namespace' => $this->namespace,
+			'hideDefinition' => !$this->module->withInstallGroups,
+			'hideManipulation' => !$this->module->withMigrationGroup,
+			'getModuleName.body' => "return '$this->lname';",
+			'getDefinitionGroup.body' => <<<EOT
 return new DefinitionGroup($this->name::getModuleName(), $this->name::class, [Core::getModuleName()]);
-EOT);
-			$class->addMember($getDefinitionGroupMethod);
-			$class->addImplement(HasDefinitionGroup::class);
-			$namespace->addUse(DefinitionGroup::class);
-			$namespace->addUse(Core::class);
-		}
-
-		if ($this->module->withManipulationGroup) {
-			$getManipulationGroups = (new Method('getManipulationGroups'))
-				->setPublic()
-				->setReturnType('array')
-				->setBody(<<<EOT
+EOT,
+			'getManipulationGroup.body' => <<<EOT
 return [
 	'' => new ManipulationGroup('', '', []),
 ];
-EOT);
-			$class->addMember($getManipulationGroups);
-			$namespace->addUse(ManipulationGroup::class);
-		}
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+EOT,
+		]);
 	}
 
 
-	public function createPresenterTrait(): PhpFile
+	public function createPresenterTrait(string $path): void
 	{
-		$injectStartupMethod = (new Method("inject{$this->name}Startup"))
-			->setPublic()
-			->setReturnType('void')
-			->setBody(<<<EOT
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/presenterTrait.neon', [
+			'name' => "{$this->name}Presenter",
+			'namespace' => "$this->namespace\Presenter",
+			'mainControl' => $this->mainControl,
+			'mainControlInterface' => $this->mainControlInterface,
+			'lname' => $this->lname,
+			'injectStartupMethod.name' => "inject{$this->name}Startup",
+			'injectStartupMethod.body' => <<<EOT
 \$this->onStartup[] = function () {
 	
 };
-EOT);
-
-		$injectAttribute = (new Attribute(Inject::class, []));
-
-		$createComponentMethod = (new Method("createComponent$this->name"))
-			->setPublic()
-			->setReturnType($this->mainControl)
-			->setBody("return \$this->$this->lname->create(\$this->entity);");
-
-		$trait = (new TraitType("{$this->name}Presenter"))
-			->addMember($injectStartupMethod)
-			->addMember($createComponentMethod);
-
-		$trait->addProperty($this->lname)
-			->setAttributes([$injectAttribute])
-			->setPublic()
-			->setType($this->mainControlInterface);
-
-		$trait->addProperty('entity')
-			->setPrivate()
-			->setType(CmsEntity::class)
-			->setNullable()
-			->setValue(null);
-
-		$namespace = (new PhpNamespace("$this->namespace\Presenter"))
-			->addUse($this->mainControlInterface)
-			->addUse($this->mainControl)
-			->addUse(Inject::class)
-			->addUse(CmsEntity::class)
-			->add($trait);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+EOT,
+			'createComponentMethod.name' => "createComponent$this->name",
+			'createComponentMethod.body' => "return \$this->$this->lname->create(\$this->entity);",
+		]);
 	}
 
 
-	public function createPresenterTemplateTrait(): PhpFile
+	public function createPresenterTemplateTrait(string $path): void
 	{
-		return File::createPhp(
-			name: "{$this->name}PresenterTemplate",
-			namespace: "$this->namespace\Presenter",
-			type: TraitType::class,
-		);
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/presenterTemplateTrait.neon', [
+			'name' => "{$this->name}PresenterTemplate",
+			'namespace' => "$this->namespace\Presenter",
+		]);
 	}
 
 
-	public function createTemplateTrait(): PhpFile
+	public function createTemplateTrait(string $path): void
 	{
-		return File::createPhp(
-			name: "{$this->name}Template",
-			namespace: "$this->namespace\Control",
-			type: TraitType::class,
-		);
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/templateTrait.neon', [
+			'name' => "{$this->name}Template",
+			'namespace' => "$this->namespace\Control",
+		]);
 	}
 
 
-	public function createTemplateFactoryTrait(): PhpFile
+	public function createTemplateFactoryTrait(string $path): void
 	{
-		$injectCreateMethod = (new Method("inject{$this->name}Create"))
-			->setPublic()
-			->setbody(<<<EOT
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/templateFactoryTrait.neon', [
+			'name' => "{$this->name}TemplateFactory",
+			'namespace' => "$this->namespace\Lib",
+			'injectCreateMethod.name' => "inject{$this->name}Create",
+			'injectCreateMethod.body' => <<<EOT
 \$this->onCreate[] = function (Template \$template) {
 	if (\$template instanceof BaseTemplate) {
 
 	}
 };
-EOT);
-		$trait = (new TraitType("{$this->name}TemplateFactory"))
-			->addMember($injectCreateMethod);
-
-		$namespace = (new PhpNamespace("$this->namespace\Lib"))
-			->add($trait);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace)
-			->addUse(BaseTemplate::class)
-			->addUse(Template::class);
-
-		return $file;
+EOT,
+		]);
 	}
 
 
-	public function createMainComponent(): PhpFile
+	public function createMainComponent(string $path): void
 	{
-		$constructMethod = (new Method('__construct'))
-			->setPublic();
-		$renderMethod = (new Method('render'))
-			->setPublic()
-			->setReturnType('void')
-			->setBody("\$this->template->render(__DIR__ . '/$this->lname.latte');");
-		$constructMethod
-			->addPromotedParameter('entity')
-			->setPrivate()
-			->setType(CmsEntity::class)
-			->setNullable();
-
-		$class = (new ClassType("{$this->name}Control"))
-			->setExtends(BaseControl::class)
-			->setImplements([MainModuleControl::class])
-//			->addComment("@property {$this->name}Template \$template")
-			->addMember($constructMethod)
-			->addMember($renderMethod);
-
-		$namespace = (new PhpNamespace("$this->namespace\Control\\$this->name"))
-			->addUse(BaseControl::class)
-			->addUse(MainModuleControl::class)
-			->addUse(CmsEntity::class)
-			->add($class);
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/mainComponent.neon', [
+			'name' => "{$this->name}Control",
+			'namespace' => "$this->namespace\Control\\$this->name",
+			'renderMethod.body' => "\$this->template->render(__DIR__ . '/$this->lname.latte');",
+		]);
 	}
 
 
-	public function createMainFactory(): PhpFile
+	public function createMainFactory(string $path): void
 	{
-		$createMethod = (new Method('create'))
-			->setReturnType("$this->namespace\Control\\$this->name\\{$this->name}Control");
-
-		$createMethod
-			->addParameter('entity')
-			->setType(CmsEntity::class)
-			->setNullable()
-			->setDefaultValue(null);
-
-		$class = (new InterfaceType("I{$this->name}Control"))
-			->setExtends(Factory::class)
-			->addMember($createMethod);
-
-		$namespace = (new PhpNamespace("$this->namespace\Control\\$this->name"))
-			->addUse(Factory::class)
-			->addUse(CmsEntity::class)
-			->add($class);
-
-		$file = (new PhpFile)->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/mainFactory.neon', [
+			'name' => "I{$this->name}Control",
+			'namespace' => "$this->namespace\Control\\$this->name",
+			'createMethod.returnType' => "$this->namespace\Control\\$this->name\\{$this->name}Control",
+		]);
 	}
 
 
-	public function createMainTemplate(): PhpFile
+	public function createMainTemplate(string $path): void
 	{
-		return File::createPhp(
-			name: "{$this->name}Template",
-			namespace: "$this->namespace\Control\\$this->name",
-			extends: BaseTemplate::class,
-		);
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/mainTemplate.neon', [
+			'name' => "{$this->name}Template",
+			'namespace' => "$this->namespace\Control\\$this->name",
+		]);
 	}
 
 
-	public function createMainLatte(): string
+	public function createModelTrait(string $path): void
 	{
-		return <<<EOT
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/modelTrait.neon', [
+			'name' => "{$this->name}Orm",
+			'namespace' => "$this->namespace\Model",
+		]);
+	}
+
+
+	public function createDataModelTrait(string $path): void
+	{
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/dataModelTrait.neon', [
+			'name' => "{$this->name}DataModel",
+			'namespace' => "$this->namespace\Model",
+		]);
+	}
+
+
+	public function createDIExtension(string $path): void
+	{
+		$this->fileGenerator->write($path, __DIR__ . '/files/module/diExtension.neon', [
+			'name' => "{$this->name}Extension",
+			'namespace' => "$this->namespace\DI",
+		]);
+	}
+
+
+	public function createMainLatte(string $path): void
+	{
+		$latte = <<<EOT
 {templateType $this->namespace\Control\\$this->name\\{$this->name}Template}
 
 EOT;
+		$this->writer->write($path, $latte);
 	}
 
 
-	public function createModelTrait(): PhpFile
+	public function createConfigNeon(string $path): void
 	{
-		return File::createPhp(
-			name: "{$this->name}Orm",
-			namespace: "$this->namespace\Model",
-			type: TraitType::class,
-		);
-	}
-
-
-	public function createDataModelTrait(): PhpFile
-	{
-		return File::createPhp(
-			name: "{$this->name}DataModel",
-			namespace: "$this->namespace\Model",
-			type: TraitType::class,
-		);
-	}
-
-
-	public function createDIExtension(): PhpFile
-	{
-		return File::createPhp(
-			name: "{$this->name}Extension",
-			namespace: "$this->namespace\DI",
-			extends: StepapoExtension::class,
-		);
-	}
-
-
-	public function createConfigNeon(): string
-	{
-		return <<<EOT
+		$neon = <<<EOT
 services:
 
 EOT;
+		$this->writer->write($path, $neon);
 	}
 
 
-	public function createInstallNeon(string $type): string
+	public function createInstallNeon(string $path, string $type): void
 	{
 		if ($type === 'module') {
-			return <<<EOT
+			$neon = <<<EOT
 class: Build\Model\Module\ModuleData
 items:
 	$this->name:
@@ -345,7 +207,7 @@ items:
 
 EOT;
 		} else if ($type === 'web') {
-			return <<<EOT
+			$neon = <<<EOT
 class: Build\Model\Web\WebData
 items:
 	$this->lname:
@@ -371,48 +233,48 @@ items:
 
 EOT;
 		}
-		return '';
+		$this->writer->write($path, $neon);
 	}
 
 
-	public function updateBasePresenter(string $path): PhpFile
+	public function updateBasePresenter(string $path): void
 	{
-		return $this->updateFile($path, "$this->namespace\Presenter\\{$this->name}Presenter");
+		$this->updateFile($path, "$this->namespace\Presenter\\{$this->name}Presenter");
 	}
 
 
-	public function updateBasePresenterTemplate(string $path): PhpFile
+	public function updateBasePresenterTemplate(string $path): void
 	{
-		return $this->updateFile($path, "$this->namespace\Presenter\\{$this->name}PresenterTemplate");
+		$this->updateFile($path, "$this->namespace\Presenter\\{$this->name}PresenterTemplate");
 	}
 
 
-	public function updateBaseTemplate(string $path): PhpFile
+	public function updateBaseTemplate(string $path): void
 	{
-		return $this->updateFile($path, "$this->namespace\Control\\{$this->name}Template");
+		$this->updateFile($path, "$this->namespace\Control\\{$this->name}Template");
 	}
 
 
-	public function updateTemplateFactory(string $path): PhpFile
+	public function updateTemplateFactory(string $path): void
 	{
-		return $this->updateFile($path, "$this->namespace\Lib\\{$this->name}TemplateFactory");
+		$this->updateFile($path, "$this->namespace\Lib\\{$this->name}TemplateFactory");
 	}
 
 
-	public function updateModel(string $path): PhpFile
+	public function updateModel(string $path): void
 	{
-		return $this->updateFile($path, "$this->namespace\Model\\{$this->name}Orm");
+		$this->updateFile($path, "$this->namespace\Model\\{$this->name}Orm");
 	}
 
 
-	public function updateDataModel(string $path): PhpFile
+	public function updateDataModel(string $path): void
 	{
-		return $this->updateFile($path, "$this->namespace\Model\\{$this->name}DataModel");
+		$this->updateFile($path, "$this->namespace\Model\\{$this->name}DataModel");
 	}
 
 
-	private function updateFile(string $path, string $trait, array $implements = []): PhpFile
+	private function updateFile(string $path, string $trait, array $implements = []): void
 	{
-		return $this->writer->updateFile($path, $trait, $implements);
+		$this->writer->updateFile($path, $trait, $implements);
 	}
 }

@@ -16,7 +16,7 @@ use Webovac\Generator\CustomPrinter;
 
 class Writer
 {
-	public function createFile(string $path, PhpFile|string|null $file = null): void
+	public function write(string $path, PhpFile|string|null $file = null): void
 	{
 		if ($file instanceof PhpFile) {
 			$this->fixConstants($file);
@@ -25,7 +25,13 @@ class Writer
 	}
 
 
-	public function sortTraits(string $path): PhpFile
+	public function remove(string $path): void
+	{
+		FileSystem::delete($path);
+	}
+
+
+	public function sortTraits(string $path): void
 	{
 		if (!($content = @file_get_contents($path))) {
 			throw new InvalidArgumentException("File '$path' does not exist.");
@@ -35,17 +41,17 @@ class Writer
 		$traits = $class->getTraits();
 		uasort($traits, function (TraitUse $a, TraitUse $b) {
 			if (str_contains($a->getName(), 'Core') xor (str_contains($b->getName(), 'Core'))) {
-				return str_contains($a->getName(), 'Core') <=> str_contains($a->getName(), 'Core');
+				return str_contains($a->getName(), 'Core') <=> str_contains($b->getName(), 'Core');
 			}
 			return strcmp($a->getName(), $b->getName());
 		});
 		$class->setTraits($traits);
-		return $file;
+		$this->write($path, $file);
 	}
 
 
 	/** @param Implement[] $implements */
-	public function updateFile(string $path, string $trait, array $implements = []): PhpFile
+	public function updateFile(string $path, string $trait, array $implements = []): void
 	{
 		if (!($content = @file_get_contents($path))) {
 			throw new InvalidArgumentException("File '$path' does not exist.");
@@ -63,12 +69,12 @@ class Writer
 			$class->addImplement($implement->class);
 			$namespace->addUse($implement->class);
 		}
-		return $file;
+		$this->write($path, $file);
 	}
 
 
 	/** @param Implement[] $implements */
-	public function checkFileImplements(string $path, array $implements = []): PhpFile
+	public function checkFileImplements(string $path, array $implements = []): void
 	{
 		if (!($content = @file_get_contents($path))) {
 			throw new InvalidArgumentException("File '$path' does not exist.");
@@ -88,7 +94,7 @@ class Writer
 		$sortedImplements = $class->getImplements();
 		sort($sortedImplements);
 		$class->setImplements($sortedImplements);
-		return $file;
+		$this->write($path, $file);
 	}
 
 

@@ -1,0 +1,10 @@
+name: %name%
+namespace: %namespace%
+extends: Nextras\Orm\Mapper\Dbal\Conventions\Conventions
+methods:
+	getStoragePrimaryKey:
+		returnType: array
+		body: "return [];"
+	getDefaultMappings:
+		returnType: array
+		body: %getDefaultMappingsMethod.body%

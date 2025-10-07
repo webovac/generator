@@ -4,48 +4,53 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
-use DateTimeInterface;
 use Nette\DI\Attributes\Inject;
 use Nette\PhpGenerator\Attribute;
 use Nette\PhpGenerator\ClassType;
-use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
-use Nette\PhpGenerator\Property;
 use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
-use Nextras\Dbal\Utils\DateTimeImmutable;
-use Nextras\Orm\Collection\ICollection;
-use Nextras\Orm\Mapper\Dbal\Conventions\Conventions;
-use Nextras\Orm\Mapper\Dbal\Conventions\IConventions;
 use Nextras\Orm\StorageReflection\StringHelper;
-use Stepapo\Model\Data\Collection;
 use Stepapo\Model\Data\DataRepository;
-use Stepapo\Model\Data\Item;
-use Tracy\Dumper;
-use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Model\CmsMapper;
 use Webovac\Core\Model\CmsRepository;
 use Webovac\Generator\Config\Entity;
-use Webovac\Generator\Config\File;
 use Webovac\Generator\Config\Module;
 use Webovac\Generator\Lib\Writer;
 
 
 class ModelGenerator
 {
-	protected string $namespace;
-	protected string $modelNamespace;
-	protected string $name;
-	protected string $lname;
-	protected string $uname;
-	protected string $traitName;
+	private const string ENTITY = 'entity';
+	private const string MAPPER = 'mapper';
+	private const string REPOSITORY = 'repository';
+	private const string CONVENTIONS = 'conventions';
+	private const string DATA_OBJECT = 'dataObject';
+	private const string DATA_REPOSITORY = 'dataRepository';
+	private const string ENTITY_TRAIT = 'entityTrait';
+	private const string MAPPER_TRAIT = 'mapperTrait';
+	private const string REPOSITORY_TRAIT = 'repositoryTrait';
+	private const string DATA_OBJECT_TRAIT = 'dataObjectTrait';
+	private const string DATA_REPOSITORY_TRAIT = 'dataRepositoryTrait';
+
+	private string $namespace;
+	private string $basePath;
+	private string $buildBasePath;
+	private string $modelNamespace;
+	private string $name;
+	private string $lname;
+	private string $uname;
+	private string $traitName;
 	private Writer $writer;
+	private FileGenerator $fileGenerator;
 
 
 	public function __construct(
 		private string $appNamespace,
+		private string $appDir,
 		private string $buildNamespace,
+		private string $buildDir,
 		private Entity $entity,
 		private ?Module $module = null,
 	) {
@@ -56,52 +61,33 @@ class ModelGenerator
 		$this->namespace = $this->module?->namespace
 			? "{$this->module->namespace}\\{$this->module->name}\Model\\$this->name"
 			: "$this->appNamespace\Model\\$this->name";
+		$this->basePath = "$this->appDir/" . ($module ? "Module/$module->name/" : '') . "Model";
+		$this->buildBasePath = "$this->buildDir/Model/$this->name";
 		$this->traitName = $this->entity->withTraits && $this->module ? "{$this->module->name}$this->name" : $this->name;
 		$this->writer = new Writer;
+		$this->fileGenerator = new FileGenerator;
 	}
 
 
-	public function createEntity(): PhpFile
+	public function createEntity(): void
 	{
-		$file = File::createPhp(
-			name: $this->name,
-			namespace: $this->modelNamespace,
-			extends: CmsEntity::class,
-		);
-		$getDataClassMethod = (new Method('getDataClass'))
-			->setPublic()
-			->setReturnType('string')
-			->setBody("return {$this->name}Data::class;");
-		$namespace = Arrays::first($file->getNamespaces());
-		$class = Arrays::first($namespace->getClasses());
-		$namespace
-			->addUse("$this->modelNamespace\\{$this->name}Data");
-		$class
-			->addMember($getDataClassMethod)
-			->addComment("@method {$this->name}Data getData(bool \$neon = false, bool \$forCache = false, ?array \$select = null)");
-		return $file;
+		$this->fileGenerator->write($this->getPath(self::ENTITY), $this->getConfig(self::ENTITY), [
+			'name' => $this->name,
+			'namespace' => $this->modelNamespace,
+			'comments' => "@method {$this->name}Data getData(bool \$neon = false, bool \$forCache = false, ?array \$select = null)",
+			'data' => "$this->modelNamespace\\{$this->name}Data",
+			'getDataClassMethod.body' => "return {$this->name}Data::class;",
+		]);
 	}
 
 
-	public function createMapper(): PhpFile
+	public function createMapper(): void
 	{
-		$file = File::createPhp(
-			name: "{$this->name}Mapper",
-			namespace: $this->modelNamespace,
-			extends: CmsMapper::class,
-		);
-		$namespace = Arrays::first($file->getNamespaces());
-		$class = Arrays::first($namespace->getClasses());
-		$getTableNameMethod = (new Method('getTableName'))
-			->setPublic()
-			->setReturnType('string')
-			->setBody("return '$this->uname';");
-		$class->addMember($getTableNameMethod);
-		if ($this->entity->withConventions) {
-			$createConventionsMethod = (new Method("{$this->name}Conventions"))
-				->setProtected()
-				->setReturnType(IConventions::class)
-				->setBody(<<<EOT
+		$this->fileGenerator->write($this->getPath(self::MAPPER), $this->getConfig(self::MAPPER), [
+			'name' => "{$this->name}Mapper",
+			'namespace' => $this->modelNamespace,
+			'hideConventions' => !$this->entity->withConventions,
+			'getDataClassMethod.body' => <<<EOT
 return new {$this->name}Conventions(
 	\$this->createInflector(),
 	\$this->connection,
@@ -109,68 +95,37 @@ return new {$this->name}Conventions(
 	\$this->getRepository()->getEntityMetadata(),
 	\$this->cache,
 );
-EOT
-				);
-			$class->addMember($createConventionsMethod);
-			$namespace->addUse(IConventions::class);
-		}
-		return $file;
+EOT,
+		]);
 	}
 
 
-	public function createRepository(): PhpFile
+	public function createRepository(): void
 	{
-		$file = File::createPhp(
-			name: "{$this->name}Repository",
-			namespace: $this->modelNamespace,
-			extends: CmsRepository::class,
-		);
-		$namespace = Arrays::first($file->getNamespaces());
-		$class = Arrays::first($namespace->getClasses());
-		$getEntityClassNamesMethod = (new Method('getEntityClassNames'))
-			->setPublic()
-			->setStatic()
-			->setReturnType('array')
-			->setBody("return [$this->name::class];");
-
-		$class->addMember($getEntityClassNamesMethod);
-		$class
-			->addComment("@method $this->name[]|ICollection findAll()")
-			->addComment("@method $this->name[]|ICollection findBy(array \$conds)")
-			->addComment("@method $this->name|null getById(mixed \$id)")
-			->addComment("@method $this->name|null getBy(array \$conds)")
-			->addComment("@method $this->name createFromData({$this->name}Data \$data, ?$this->name \$original = null, ?CmsEntity \$parent = null, ?string \$parentName = null, ?Person \$person = null, ?\DateTimeInterface \$date = null, bool \$skipDefaults = false, bool \$getOriginalByData = false)");
-
-		$namespace
-			->addUse(ICollection::class)
-			->addUse("$this->modelNamespace\\{$this->name}Data")
-			->addUse(CmsEntity::class);
-
-		if ($this->name !== 'Person') {
-			$namespace->addUse("$this->buildNamespace\Model\Person\Person");
-		}
-
-		return $file;
+		$this->fileGenerator->write($this->getPath(self::REPOSITORY), $this->getConfig(self::REPOSITORY), [
+			'name' => "{$this->name}Repository",
+			'namespace' => $this->modelNamespace,
+			'comments' => [
+				"@method $this->name[]|ICollection findAll()",
+				"@method $this->name[]|ICollection findBy(array \$conds)",
+				"@method $this->name|null getById(mixed \$id)",
+				"@method $this->name|null getBy(array \$conds)",
+				"@method $this->name createFromData({$this->name}Data \$data, ?$this->name \$original = null, ?CmsEntity \$parent = null, ?string \$parentName = null, ?Person \$person = null, ?\DateTimeInterface \$date = null, bool \$skipDefaults = false, bool \$getOriginalByData = false)",
+			],
+			'person' => "$this->buildNamespace\Model\Person\Person",
+			'hidePerson' => $this->name === 'Person',
+			'data' => "$this->modelNamespace\\{$this->name}Data",
+			'getEntityClassNamesMethod.body' => "return [$this->name::class];",
+		]);
 	}
 
 
-	public function createConventions(): PhpFile
+	public function createConventions(): void
 	{
-		$file = File::createPhp(
-			name: "{$this->name}Repository",
-			namespace: $this->modelNamespace,
-			extends: Conventions::class,
-		);
-		$namespace = Arrays::first($file->getNamespaces());
-		$class = Arrays::first($namespace->getClasses());
-		$getStoragePrimaryKeyMethod = (new Method('getStoragePrimaryKey'))
-			->setPublic()
-			->setReturnType('array')
-			->setBody("return [];");
-		$getDefaultMappingsMethod = (new Method('getDefaultMappings'))
-			->setPublic()
-			->setReturnType('array')
-			->setBody(<<<EOT
+		$this->fileGenerator->write($this->getPath(self::CONVENTIONS), $this->getConfig(self::CONVENTIONS), [
+			'name' => "{$this->name}Conventions",
+			'namespace' => $this->modelNamespace,
+			'getDefaultMappingsMethod.body' => <<<EOT
 return [
 	[
 	
@@ -180,149 +135,120 @@ return [
 	],
 	[]
 ];
-EOT
-			);
-		$class
-			->addMember($getStoragePrimaryKeyMethod)
-			->addMember($getDefaultMappingsMethod);
-		return $file;
+EOT,
+		]);
 	}
 
 
-	public function createDataObject(): PhpFile
+	public function createDataObject(): void
 	{
-		return File::createPhp(
-			name: "{$this->name}Data",
-			namespace: $this->modelNamespace,
-			extends: Item::class,
-		);
+		$this->fileGenerator->write($this->getPath(self::DATA_OBJECT), $this->getConfig(self::DATA_OBJECT), [
+			'name' => "{$this->name}Data",
+			'namespace' => $this->modelNamespace,
+		]);
 	}
 
 
-	public function createDataRepository(): ?PhpFile
+	public function createDataRepository(): void
 	{
-		$file = File::createPhp(
-			name: "{$this->name}DataRepository",
-			namespace: $this->modelNamespace,
-			extends: DataRepository::class,
-		);
-		$namespace = Arrays::first($file->getNamespaces());
-		$class = Arrays::first($namespace->getClasses());
-		$class
-			->addComment("@method {$this->name}Data[]|Collection findByKeys(array \$keys)")
-			->addComment("@method {$this->name}Data|null getByKey(mixed \$key)");
-		$namespace
-			->addUse(Collection::class)
-			->addUse("$this->modelNamespace\\{$this->name}Data");
-		return $file;
+		$this->fileGenerator->write($this->getPath(self::DATA_REPOSITORY), $this->getConfig(self::DATA_REPOSITORY), [
+			'name' => "{$this->name}DataRepository",
+			'namespace' => $this->modelNamespace,
+			'comments' => [
+				"@method {$this->name}Data[]|Collection findByKeys(array \$keys)",
+				"@method {$this->name}Data|null getByKey(mixed \$key)",
+			],
+			'data' => "$this->modelNamespace\\{$this->name}Data",
+		]);
 	}
 
 
-	public function createEntityTrait(): PhpFile
+	public function createEntityTrait(): void
 	{
-		$file = File::createPhp(
-			name: $this->traitName,
-			namespace: $this->modelNamespace,
-			extends: !$this->entity->withTraits ? null : CmsEntity::class,
-			type: $this->entity->withTraits ? TraitType::class : ClassType::class,
-		);
-		$namespace = Arrays::first($file->getNamespaces());
-		$namespace
-			->addUse(DateTimeImmutable::class);
-
-		if ($this->name !== 'Person') {
-			$namespace->addUse("$this->buildNamespace\Model\Person\Person");
-		}
-		return $file;
+		$this->fileGenerator->write($this->getPath(self::ENTITY_TRAIT), $this->getConfig(self::ENTITY_TRAIT), [
+			'name' => $this->traitName,
+			'namespace' => $this->namespace,
+			'extends' => $this->entity->withTraits ? null : CmsMapper::class,
+			'type' => $this->entity->withTraits ? TraitType::class : ClassType::class,
+		]);
 	}
 
 
-	public function createMapperTrait(): PhpFile
+	public function createMapperTrait(): void
 	{
-		return File::createPhp(
-			name: "{$this->traitName}Mapper",
-			namespace: $this->modelNamespace,
-			extends: !$this->entity->withTraits ? null : CmsMapper::class,
-			type: $this->entity->withTraits ? TraitType::class : ClassType::class,
-		);
+		$this->fileGenerator->write($this->getPath(self::MAPPER_TRAIT),$this->getConfig(self::MAPPER_TRAIT), [
+			'name' => "{$this->traitName}Mapper",
+			'namespace' => $this->namespace,
+			'extends' => $this->entity->withTraits ? null : CmsMapper::class,
+			'type' => $this->entity->withTraits ? TraitType::class : ClassType::class,
+		]);
 	}
 
 
-	public function createRepositoryTrait(): PhpFile
+	public function createRepositoryTrait(): void
 	{
-		return File::createPhp(
-			name: "{$this->traitName}Repository",
-			namespace: $this->modelNamespace,
-			extends: !$this->entity->withTraits ? null : CmsRepository::class,
-			type: $this->entity->withTraits ? TraitType::class : ClassType::class,
-		);
+		$this->fileGenerator->write($this->getPath(self::REPOSITORY_TRAIT), $this->getConfig(self::REPOSITORY_TRAIT), [
+			'name' => "{$this->traitName}Repository",
+			'namespace' => $this->namespace,
+			'extends' => $this->entity->withTraits ? null : CmsRepository::class,
+			'type' => $this->entity->withTraits ? TraitType::class : ClassType::class,
+		]);
 	}
 
 
-	public function createDataObjectTrait(): PhpFile
+	public function createDataObjectTrait(): void
 	{
-		$file = File::createPhp(
-			name: "{$this->traitName}Data",
-			namespace: $this->modelNamespace,
-			extends: !$this->entity->withTraits ? null : Item::class,
-			type: $this->entity->withTraits ? TraitType::class : ClassType::class,
-		);
-		$namespace = Arrays::first($file->getNamespaces());
-		$class = Arrays::first($namespace->getClasses());
-		$class
-			->setProperties([
-				(new Property('id'))->setPublic()->setType('int')->setNullable(),
-				(new Property('createdByPerson'))->setPublic()->setType('int|string')->setNullable(),
-				(new Property('updatedByPerson'))->setPublic()->setType('int|string')->setNullable(),
-				(new Property('createdAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable(),
-				(new Property('updatedAt'))->setPublic()->setType(DateTimeInterface::class)->setNullable(),
-			]);
-		return $file;
+		$this->fileGenerator->write($this->getPath(self::DATA_OBJECT_TRAIT), $this->getConfig(self::DATA_OBJECT_TRAIT), [
+			'name' => "{$this->traitName}Data",
+			'namespace' => $this->namespace,
+			'extends' => $this->entity->withTraits ? null : CmsRepository::class,
+			'type' => $this->entity->withTraits ? TraitType::class : ClassType::class,
+		]);
 	}
 
 
-	public function createDataRepositoryTrait(): PhpFile
+	public function createDataRepositoryTrait(): void
 	{
-		return File::createPhp(
-			name: "{$this->traitName}DataRepository",
-			namespace: $this->modelNamespace,
-			extends: !$this->entity->withTraits ? null : DataRepository::class,
-			type: $this->entity->withTraits ? TraitType::class : ClassType::class,
-		);
+		$this->fileGenerator->write($this->getPath(self::DATA_REPOSITORY_TRAIT), $this->getConfig(self::MAPPER_TRAIT), [
+			'name' => "{$this->traitName}DataRepository",
+			'namespace' => $this->namespace,
+			'extends' => $this->entity->withTraits ? null : DataRepository::class,
+			'type' => $this->entity->withTraits ? TraitType::class : ClassType::class,
+		]);
 	}
 
 
-	public function updateEntity(string $path): PhpFile
+	public function updateEntity(): void
 	{
-		return $this->updateFile($path, "$this->namespace\\{$this->traitName}", $this->entity->entityImplements);
+		$this->updateFile($this->getPath(self::ENTITY), "$this->namespace\\{$this->traitName}", $this->entity->entityImplements);
 	}
 
 
-	public function updateMapper(string $path): PhpFile
+	public function updateMapper(): void
 	{
-		return $this->updateFile($path, "$this->namespace\\{$this->traitName}Mapper");
+		$this->updateFile($this->getPath(self::MAPPER), "$this->namespace\\{$this->traitName}Mapper");
 	}
 
 
-	public function updateRepository(string $path): PhpFile
+	public function updateRepository(): void
 	{
-		return $this->updateFile($path, "$this->namespace\\{$this->traitName}Repository", $this->entity->repositoryImplements);
+		$this->updateFile($this->getPath(self::REPOSITORY), "$this->namespace\\{$this->traitName}Repository", $this->entity->repositoryImplements);
 	}
 
 
-	public function updateDataObject(string $path): PhpFile
+	public function updateDataObject(): void
 	{
-		return $this->updateFile($path, "$this->namespace\\{$this->traitName}Data");
+		$this->updateFile($this->getPath(self::DATA_OBJECT), "$this->namespace\\{$this->traitName}Data");
 	}
 
 
-	public function updateDataRepository(string $path): PhpFile
+	public function updateDataRepository(): void
 	{
-		return $this->updateFile($path, "$this->namespace\\{$this->traitName}DataRepository");
+		$this->updateFile($this->getPath(self::DATA_REPOSITORY), "$this->namespace\\{$this->traitName}DataRepository");
 	}
 
 
-	public function updateDataModel(string $path): PhpFile
+	public function updateDataModel(string $path): void
 	{
 		$file = PhpFile::fromCode(file_get_contents($path));
 
@@ -344,12 +270,13 @@ EOT
 			->setType($type)
 			->setAttributes([new Attribute(Inject::class, [])]);
 
-		return $file;
+		$this->writer->write($path, $file);
 	}
 
 
-	public function updateModel(string $path): PhpFile
+	public function updateModel(): void
 	{
+		$path = "$this->basePath/{$this->module->name}Orm.php";
 		$file = PhpFile::fromCode(file_get_contents($path));
 
 		/** @var PhpNamespace $namespace */
@@ -365,12 +292,48 @@ EOT
 		sort($comments);
 		$class->setComment(implode("\n", $comments));
 
-		return $file;
+		$this->writer->write($path, $file);
 	}
 
 
-	private function updateFile(string $path, string $trait, array $implements = []): PhpFile
+	private function updateFile(string $path, string $trait, array $implements = []): void
 	{
-		return $this->writer->updateFile($path, $trait, $implements);
+		$this->writer->updateFile($path, $trait, $implements);
+	}
+
+
+	private function getPath(string $key): string
+	{
+		return match($key) {
+			self::ENTITY => "$this->buildBasePath/$this->name.php",
+			self::MAPPER => "$this->buildBasePath/{$this->name}Mapper.php",
+			self::REPOSITORY => "$this->buildBasePath/{$this->name}Repository.php",
+			self::CONVENTIONS => "$this->basePath/{$this->name}/{$this->name}Conventions.php",
+			self::DATA_OBJECT => "$this->buildBasePath/{$this->name}Data.php",
+			self::DATA_REPOSITORY => "$this->buildBasePath/{$this->name}DataRepository.php",
+			self::ENTITY_TRAIT => "$this->basePath/{$this->name}/$this->traitName.php",
+			self::MAPPER_TRAIT => "$this->basePath/{$this->name}/{$this->traitName}Mapper.php",
+			self::REPOSITORY_TRAIT => "$this->basePath/{$this->name}/{$this->traitName}Repository.php",
+			self::DATA_OBJECT_TRAIT => "$this->basePath/{$this->name}/{$this->traitName}Data.php",
+			self::DATA_REPOSITORY_TRAIT => "$this->basePath/$this->name/{$this->traitName}DataRepository.php",
+		};
+	}
+
+
+	private function getConfig(string $key): string
+	{
+		return match($key) {
+			self::ENTITY => __DIR__ . '/files/model/entity.neon',
+			self::MAPPER => __DIR__ . '/files/model/mapper.neon',
+			self::REPOSITORY => __DIR__ . '/files/model/repository.neon',
+			self::CONVENTIONS => __DIR__ . '/files/model/conventions.neon',
+			self::DATA_OBJECT => __DIR__ . '/files/model/dataObject.neon',
+			self::DATA_REPOSITORY => __DIR__ . '/files/model/dataRepository.neon',
+			self::ENTITY_TRAIT => __DIR__ . '/files/model/entityTrait.neon',
+			self::MAPPER_TRAIT => __DIR__ . '/files/model/mapperTrait.neon',
+			self::REPOSITORY_TRAIT => __DIR__ . '/files/model/repositoryTrait.neon',
+			self::DATA_OBJECT_TRAIT => __DIR__ . '/files/model/dataObjectTrait.neon',
+			self::DATA_REPOSITORY_TRAIT => __DIR__ . '/files/model/dataRepositoryTrait.neon',
+		};
 	}
 }

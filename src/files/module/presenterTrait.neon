@@ -1,0 +1,26 @@
+name: %name%
+namespace: %namespace%
+type: Nette\PhpGenerator\TraitType
+uses:
+	%mainControl%:
+	%mainControlInterface%:
+	Webovac\Core\Model\CmsEntity:
+	Nette\DI\Attributes\Inject:
+properties:
+	%lname%:
+		type: %mainControlInterface%
+		attributes:
+			Nette\DI\Attributes\Inject:
+	entity:
+		visibility: private
+		type: Webovac\Core\Model\CmsEntity
+		nullable: true
+		hasValue: true
+		value: null
+methods:
+	%injectStartupMethod.name%:
+		returnType: void
+		body: %injectStartupMethod.body%
+	%createComponentMethod.name%:
+		returnType: %mainControl%
+		body: %createComponentMethod.body%

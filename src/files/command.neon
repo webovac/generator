@@ -1,0 +1,9 @@
+name: %name%
+namespace: %namespace%
+implements:
+	Stepapo\Utils\Command\Command:
+methods:
+	__construct:
+	run:
+		returnType: int
+		body: 'return 0;'

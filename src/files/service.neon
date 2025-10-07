@@ -1,0 +1,6 @@
+name: %name%
+namespace: %namespace%
+implements:
+	Stepapo\Utils\Service:
+methods:
+	__construct:

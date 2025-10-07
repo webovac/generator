@@ -1,0 +1,16 @@
+name: %name%
+namespace: %namespace%
+type: Nette\PhpGenerator\InterfaceType
+extends: Stepapo\Utils\Factory
+uses:
+	Webovac\Core\Model\CmsEntity:
+methods:
+	create:
+		visibility: null
+		returnType: %createMethod.returnType%
+		parameters:
+			entity:
+				type: Webovac\Core\Model\CmsEntity
+				nullable: true
+				hasValue: true
+				value: null

@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
-use Build\Control\BaseTemplate;
 use Nette\PhpGenerator\PhpFile;
 use Nette\Utils\FileSystem;
 use Stepapo\Model\Definition\Config\Foreign;
 use Stepapo\Model\Definition\Config\Table;
-use Webovac\Core\Control\BaseControl;
 use Webovac\Generator\Config\Command;
 use Webovac\Generator\Config\Component;
 use Webovac\Generator\Config\Entity;
@@ -22,15 +20,14 @@ class Generator
 {
 	public const string MODE_ADD = 'add';
 	public const string MODE_REMOVE = 'remove';
-
 	private Writer $writer;
 
 
 	public function __construct(
-		protected string $appNamespace = 'App',
-		protected string $appDir = 'app',
-		protected string $buildNamespace = 'Build',
-		protected string $buildDir = 'build',
+		private string $appNamespace = 'App',
+		private string $appDir = 'app',
+		private string $buildNamespace = 'Build',
+		private string $buildDir = 'build',
 	) {
 		$this->writer = new Writer;
 	}
@@ -44,28 +41,28 @@ class Generator
 		$lname = lcfirst($name);
 
 		if (!$module->isPackage) {
-			$this->createFile("$basePath/$name.php", $generator->createModule());
-			$this->createFile("$basePath/Presenter/{$name}Presenter.php", $generator->createPresenterTrait());
-			$this->createFile("$basePath/Presenter/{$name}PresenterTemplate.php", $generator->createPresenterTemplateTrait());
-			$this->createFile("$basePath/Control/{$name}Template.php", $generator->createTemplateTrait());
-			$this->createFile("$basePath/Lib/{$name}TemplateFactory.php", $generator->createTemplateFactoryTrait());
-			$this->createFile("$basePath/Control/$name/{$name}Control.php", $generator->createMainComponent());
-			$this->createFile("$basePath/Control/$name/I{$name}Control.php", $generator->createMainFactory());
-//			$this->createFile("$basePath/Control/$name/{$name}Template.php", $generator->generateMainTemplate());
-			$this->createFile("$basePath/Control/$name/$lname.latte", $generator->createMainLatte());
+			$generator->createModule("$basePath/$name.php");
+			$generator->createPresenterTrait("$basePath/Presenter/{$name}Presenter.php");
+			$generator->createPresenterTemplateTrait("$basePath/Presenter/{$name}PresenterTemplate.php");
+			$generator->createTemplateTrait("$basePath/Control/{$name}Template.php");
+			$generator->createTemplateFactoryTrait("$basePath/Lib/{$name}TemplateFactory.php");
+			$generator->createMainComponent("$basePath/Control/$name/{$name}Control.php");
+			$generator->createMainFactory("$basePath/Control/$name/I{$name}Control.php");
+//			$generator->generateMainTemplate("$basePath/Control/$name/{$name}Template.php");
+			$generator->createMainLatte("$basePath/Control/$name/$lname.latte");
 			if ($module->entities) {
-				$this->createFile("$basePath/Model/{$name}DataModel.php", $generator->createDataModelTrait());
-				$this->createFile("$basePath/Model/{$name}Orm.php", $generator->createModelTrait());
+				$generator->createDataModelTrait("$basePath/Model/{$name}DataModel.php");
+				$generator->createModelTrait("$basePath/Model/{$name}Orm.php");
 			}
 			if ($module->withDIExtension) {
-				$this->createFile("$basePath/DI/{$name}Extension.php", $generator->createDIExtension());
-				$this->createFile("$basePath/DI/config.neon", $generator->createConfigNeon());
+				$generator->createDIExtension("$basePath/DI/{$name}Extension.php");
+				$generator->createConfigNeon("$basePath/DI/config.neon");
 			}
 			if ($module->withInstallFile) {
-				$this->createFile("$basePath/config/manipulations/insert.$module->type.$lname.neon", $generator->createInstallNeon($module->type));
+				$generator->createInstallNeon("$basePath/config/manipulations/insert.$module->type.$lname.neon", $module->type);
 			}
 			if ($module->withMigrationGroup) {
-				$this->createFile("$basePath/config/definitions/001-init.neon");
+				$this->writer->write("$basePath/config/definitions/001-init.neon");
 			}
 		}
 	}
@@ -82,55 +79,55 @@ class Generator
 		$name = $component->name;
 		$lname = lcfirst($name);
 		$templateName = $component->withTemplateName ? 'default' : $lname;
-		$this->createFile("$basePath/$name/{$name}Template.php", $generator->createTemplate(BaseTemplate::class));
-		$this->createFile("$basePath/$name/I{$name}Control.php", $generator->createFactory());
-		$this->createFile("$basePath/$name/{$name}Control.php", $generator->createControl(BaseControl::class));
-		$this->createFile("$basePath/$name/$templateName.latte", $generator->createLatte());
+		$generator->createTemplate("$basePath/$name/{$name}Template.php");
+		$generator->createFactory("$basePath/$name/I{$name}Control.php");
+		$generator->createControl("$basePath/$name/{$name}Control.php");
+		$generator->createLatte("$basePath/$name/$templateName.latte");
 		if ($component->type === ComponentGenerator::TYPE_DATASET) {
-			$this->createFile("$basePath/$name/$lname.neon", $generator->createDatasetNeon());
+			$generator->createDatasetNeon("$basePath/$name/$lname.neon");
 		}
 		if ($component->type === ComponentGenerator::TYPE_MENU) {
-			$this->createFile("$basePath/$name/$lname.neon", $generator->createMenuNeon());
+			$generator->createMenuNeon("$basePath/$name/$lname.neon");
 		}
 		if (!$module) {
 			return;
 		}
-		$this->createFile($mainComponentPath = "$basePath/$module->name/{$module->name}Control.php", $generator->updateMainComponent($mainComponentPath));
+		$generator->updateMainComponent("$basePath/$module->name/{$module->name}Control.php");
 	}
 
 
 	public function createBuildEntity(Entity $entity): void
 	{
-		$name = $entity->name;
 		$generator = new ModelGenerator(
 			appNamespace: $this->appNamespace,
+			appDir: $this->appDir,
 			buildNamespace: $this->buildNamespace,
+			buildDir: $this->buildDir,
 			entity: $entity,
 		);
-		$modelBasePath = "$this->buildDir/Model";
-		$this->createFile("$modelBasePath/$name/$name.php", $generator->createEntity());
-		$this->createFile("$modelBasePath/$name/{$name}Mapper.php", $generator->createMapper());
-		$this->createFile("$modelBasePath/$name/{$name}Repository.php", $generator->createRepository());
-		$this->createFile("$modelBasePath/$name/{$name}Data.php",  $generator->createDataObject());
-		$this->createFile("$modelBasePath/$name/{$name}DataRepository.php", $generator->createDataRepository());
+		$generator->createEntity();
+		$generator->createMapper();
+		$generator->createRepository();
+		$generator->createDataObject();
+		$generator->createDataRepository();
 	}
 
 
 	public function updateBuildEntity(Entity $entity, Module $module): void
 	{
-		$name = $entity->name;
 		$generator = new ModelGenerator(
 			appNamespace: $this->appNamespace,
+			appDir: $this->appDir,
 			buildNamespace: $this->buildNamespace,
+			buildDir: $this->buildDir,
 			entity: $entity,
 			module: $module,
 		);
-		$modelBasePath = "$this->buildDir/Model";
-		$this->createFile($entityPath = "$modelBasePath/$name/$name.php", $generator->updateEntity($entityPath));
-		$this->createFile($mapperPath = "$modelBasePath/$name/{$name}Mapper.php", $generator->updateMapper($mapperPath));
-		$this->createFile($repositoryPath = "$modelBasePath/$name/{$name}Repository.php", $generator->updateRepository($repositoryPath));
-		$this->createFile($dataObjectPath = "$modelBasePath/$name/{$name}Data.php",  $generator->updateDataObject($dataObjectPath));
-		$this->createFile($dataRepositoryPath = "$modelBasePath/$name/{$name}DataRepository.php", $generator->updateDataRepository($dataRepositoryPath));
+		$generator->updateEntity();
+		$generator->updateMapper();
+		$generator->updateRepository();
+		$generator->updateDataObject();
+		$generator->updateDataRepository();
 	}
 
 
@@ -141,45 +138,44 @@ class Generator
 	{
 		$generator = new ModelGenerator(
 			appNamespace: $this->appNamespace,
+			appDir: $this->appDir,
 			buildNamespace: $this->buildNamespace,
+			buildDir: $this->buildDir,
 			entity: $entity,
 			module: $module,
 		);
-		$basePath = "$this->appDir/" . ($module ? "Module/$module->name/" : '') . "Model";
 		if ($module?->isPackage) {
 			return;
 		}
-		$className = $entity->withTraits ? "$module->name$entity->name" : $entity->name;
-		$this->createFile("$basePath/$entity->name/$className.php", $generator->createEntityTrait());
-		$this->createFile("$basePath/$entity->name/{$className}Mapper.php", $generator->createMapperTrait());
-		$this->createFile("$basePath/$entity->name/{$className}Repository.php", $generator->createRepositoryTrait());
-		$this->createFile("$basePath/$entity->name/{$className}Data.php", $generator->createDataObjectTrait());
-		$this->createFile("$basePath/$entity->name/{$className}DataRepository.php", $generator->createDataRepositoryTrait());
+		$generator->createEntityTrait();
+		$generator->createMapperTrait();
+		$generator->createRepositoryTrait();
+		$generator->createDataObjectTrait();
+		$generator->createDataRepositoryTrait();
 		if ($entity->withConventions) {
-			$this->createFile("$basePath/$entity->name/{$className}Conventions.php", $generator->createConventions());
+			$generator->createConventions();
 		}
-		$modelPath = "$basePath/{$module->name}Orm.php";
-		$this->createFile($modelPath, $generator->updateModel($modelPath));
+		$generator->updateModel();
 	}
 
 
 	public function checkEntity(Entity $entity, ?Module $module = null): void
 	{
 		$modelBasePath = $module && !$entity->withTraits
-			? "$this->appDir/Module/$module->name/Model"
-			: "$this->buildDir/Model";
-		$this->createFile($entityPath = "$modelBasePath/$entity->name/$entity->name.php", $this->writer->checkFileImplements($entityPath, $entity->entityImplements));
-		$this->createFile($repositoryPath = "$modelBasePath/$entity->name/{$entity->name}Repository.php", $this->writer->checkFileImplements($repositoryPath, $entity->repositoryImplements));
+			? "$this->appDir/Module/$module->name/Model/$entity->name"
+			: "$this->buildDir/Model/$entity->name";
+		$this->writer->checkFileImplements("$modelBasePath/$entity->name.php", $entity->entityImplements);
+		$this->writer->checkFileImplements("$modelBasePath/{$entity->name}Repository.php", $entity->repositoryImplements);
 		if ($entity->withTraits) {
 			$paths = [
-				"$modelBasePath/$entity->name/$entity->name.php",
-				"$modelBasePath/$entity->name/{$entity->name}Data.php",
-				"$modelBasePath/$entity->name/{$entity->name}DataRepository.php",
-				"$modelBasePath/$entity->name/{$entity->name}Mapper.php",
-				"$modelBasePath/$entity->name/{$entity->name}Repository.php",
+				"$modelBasePath/$entity->name.php",
+				"$modelBasePath/{$entity->name}Data.php",
+				"$modelBasePath/{$entity->name}DataRepository.php",
+				"$modelBasePath/{$entity->name}Mapper.php",
+				"$modelBasePath/{$entity->name}Repository.php",
 			];
 			foreach ($paths as $path) {
-				$this->createFile($path, $this->writer->sortTraits($path));
+				$this->writer->sortTraits($path);
 			}
 		}
 	}
@@ -192,8 +188,7 @@ class Generator
 			service: $service,
 			module: $module
 		);
-		$basePath = "$this->appDir/" . ($module ? "Module/{$module->name}/" : '') . "Lib";
-		$this->createFile("$basePath/{$service->name}.php", $generator->createService());
+		$generator->createService();
 	}
 
 
@@ -201,51 +196,11 @@ class Generator
 	{
 		$generator = new CommandGenerator(
 			appNamespace: $this->appNamespace,
+			appDir: $this->appDir,
 			command: $command,
 			module: $module
 		);
-		$basePath = "$this->appDir/" . ($module ? "Module/{$module->name}/" : '') . "Command";
-		$this->createFile("$basePath/{$command->name}.php", $generator->createCommand());
-	}
-
-
-	public function removeModule(Module $module): void
-	{
-		FileSystem::delete("$this->appDir/Module/$module->name");
-	}
-
-
-	public function removeModel(Entity $entity, ?Module $module = null): void
-	{
-		FileSystem::delete("$this->appDir/" . ($module ? "Module/$module->name/" : '') . "Model/$entity->name");
-	}
-
-
-	public function removeComponent(Component $component, ?Module $module = null): void
-	{
-		FileSystem::delete("$this->appDir/" . ($module ? "Module/$module->name/" : '') . "Control/$component->name");
-		if (!$module) {
-			return;
-		}
-		$generator = new ComponentGenerator(
-			appNamespace: $this->appNamespace,
-			component: $component,
-			module: $module,
-			mode: Generator::MODE_REMOVE,
-		);
-		$this->createFile($mainComponentPath = "$this->appDir/Module/$module->name/Control/$module->name/{$module->name}Control.php", $generator->updateMainComponent($mainComponentPath));
-	}
-
-
-	public function removeService(Service $service, ?Module $module = null)
-	{
-		FileSystem::delete("$this->appDir/" . ($module ? "Module/$module->name/" : '') . "Lib/$service->name.php");
-	}
-
-
-	public function removeCommand(Command $command, ?Module $module = null)
-	{
-		FileSystem::delete("$this->appDir/" . ($module ? "Module/$module->name/" : '') . "Command/$command->name.php");
+		$generator->createCommand();
 	}
 
 
@@ -253,13 +208,14 @@ class Generator
 	{
 		$generator = new BuildGenerator(
 			namespace: $this->buildNamespace,
+			dir: $this->buildDir,
 		);
-		$this->createFile("$this->buildDir/Presenter/BasePresenter.php", $generator->createBasePresenter());
-		$this->createFile("$this->buildDir/Presenter/BasePresenterTemplate.php", $generator->createBasePresenterTemplate());
-		$this->createFile("$this->buildDir/Control/BaseTemplate.php", $generator->createBaseTemplate());
-		$this->createFile("$this->buildDir/Lib/BaseTemplateFactory.php", $generator->createTemplateFactory());
-		$this->createFile("$this->buildDir/Model/Orm.php", $generator->createModel());
-		$this->createFile("$this->buildDir/Model/DataModel.php", $generator->createDataModel());
+		$generator->createBasePresenter();
+		$generator->createBasePresenterTemplate();
+		$generator->createBaseTemplate();
+		$generator->createTemplateFactory();
+		$generator->createModel();
+		$generator->createDataModel();
 	}
 
 
@@ -274,7 +230,7 @@ class Generator
 			"$this->buildDir/Model/DataModel.php",
 		];
 		foreach ($paths as $path) {
-			$this->createFile($path, $this->writer->sortTraits($path));
+			$this->writer->sortTraits($path);
 		}
 	}
 
@@ -282,19 +238,13 @@ class Generator
 	public function updateBuild(Module $module): void
 	{
 		$generator = new ModuleGenerator($module);
-		$basePresenterPath = "$this->buildDir/Presenter/BasePresenter.php";
-		$this->createFile($basePresenterPath, $generator->updateBasePresenter($basePresenterPath));
-		$basePresenterTemplatePath = "$this->buildDir/Presenter/BasePresenterTemplate.php";
-		$this->createFile($basePresenterTemplatePath, $generator->updateBasePresenterTemplate($basePresenterTemplatePath));
-		$baseTemplatePath = "$this->buildDir/Control/BaseTemplate.php";
-		$this->createFile($baseTemplatePath, $generator->updateBaseTemplate($baseTemplatePath));
-		$baseTemplateFactoryPath = "$this->buildDir/Lib/BaseTemplateFactory.php";
-		$this->createFile($baseTemplateFactoryPath, $generator->updateTemplateFactory($baseTemplateFactoryPath));
+		$generator->updateBasePresenter("$this->buildDir/Presenter/BasePresenter.php");
+		$generator->updateBasePresenterTemplate("$this->buildDir/Presenter/BasePresenterTemplate.php");
+		$generator->updateBaseTemplate("$this->buildDir/Control/BaseTemplate.php");
+		$generator->updateTemplateFactory("$this->buildDir/Lib/BaseTemplateFactory.php");
 		if ($module->entities) {
-			$modelPath = "$this->buildDir/Model/Orm.php";
-			$this->createFile($modelPath, $generator->updateModel($modelPath));
-			$dataModelPath = "$this->buildDir/Model/DataModel.php";
-			$this->createFile($dataModelPath, $generator->updateDataModel($dataModelPath));
+			$generator->updateModel("$this->buildDir/Model/Orm.php");
+			$generator->updateDataModel("$this->buildDir/Model/DataModel.php");
 		}
 	}
 
@@ -321,7 +271,7 @@ class Generator
 		);
 		$name = $table->getPhpName();
 		$basePath = $table->module ? "$this->appDir/$table->module/Model" : "$this->buildDir/Model";
-		$this->createFile($entityPath = "$basePath/$name/$name.php", $generator->createEntityProperties($entityPath));
+		$generator->createEntityProperties("$basePath/$name/$name.php");
 	}
 
 
@@ -334,7 +284,7 @@ class Generator
 		);
 		$name = $from->getPhpTable();
 		$basePath = $table->module ? "$this->appDir/$table->module/Model" : "$this->buildDir/Model";
-		$this->createFile($entityPath = "$basePath/$name/$name.php", $generator->createEntityPropertyManyHasMany($entityPath, $from, $to, $isMain));
+		$generator->createEntityPropertyManyHasMany("$basePath/$name/$name.php", $from, $to, $isMain);
 	}
 
 
@@ -347,7 +297,7 @@ class Generator
 		);
 		$name = $foreign->getPhpTable();
 		$basePath = $table->module ? "$this->appDir/$table->module/Model" : "$this->buildDir/Model";
-		$this->createFile($entityPath = "$basePath/$name/$name.php", $generator->createEntityPropertyOneHasMany($entityPath, $foreign));
+		$generator->createEntityPropertyOneHasMany("$basePath/$name/$name.php", $foreign);
 	}
 
 
@@ -360,13 +310,46 @@ class Generator
 		);
 		$name = $table->getPhpName();
 		$basePath = $table->module ? "$this->appDir/$table->module" : "$this->buildDir/Model";
-		$entityPath = "$basePath/$name/$name.php";
-		$this->createFile($entityPath, $generator->sortEntityProperties($entityPath));
+		$generator->sortEntityProperties("$basePath/$name/$name.php");
 	}
 
 
-	private function createFile(string $path, PhpFile|string|null $file = null): void
+	public function removeModule(Module $module): void
 	{
-		$this->writer->createFile($path, $file);
+		$this->writer->remove("$this->appDir/Module/$module->name");
+	}
+
+
+	public function removeModel(Entity $entity, ?Module $module = null): void
+	{
+		$this->writer->remove("$this->appDir/" . ($module ? "Module/$module->name/" : '') . "Model/$entity->name");
+	}
+
+
+	public function removeComponent(Component $component, ?Module $module = null): void
+	{
+		$this->writer->remove("$this->appDir/" . ($module ? "Module/$module->name/" : '') . "Control/$component->name");
+		if (!$module) {
+			return;
+		}
+		$generator = new ComponentGenerator(
+			appNamespace: $this->appNamespace,
+			component: $component,
+			module: $module,
+			mode: Generator::MODE_REMOVE,
+		);
+		$generator->updateMainComponent("$this->appDir/Module/$module->name/Control/$module->name/{$module->name}Control.php");
+	}
+
+
+	public function removeService(Service $service, ?Module $module = null)
+	{
+		$this->writer->remove("$this->appDir/" . ($module ? "Module/$module->name/" : '') . "Lib/$service->name.php");
+	}
+
+
+	public function removeCommand(Command $command, ?Module $module = null)
+	{
+		$this->writer->remove("$this->appDir/" . ($module ? "Module/$module->name/" : '') . "Command/$command->name.php");
 	}
 }

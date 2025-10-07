@@ -15,10 +15,12 @@ use Stepapo\Model\Definition\Config\Foreign;
 use Stepapo\Model\Definition\Config\Table;
 use Stepapo\Model\Orm\InternalProperty;
 use Stepapo\Model\Orm\PrivateProperty;
+use Webovac\Generator\Lib\Writer;
 
 class PropertyGenerator
 {
 	private string $namespace;
+	private Writer $writer;
 
 
 	public function __construct(
@@ -29,6 +31,7 @@ class PropertyGenerator
 		$this->namespace = $this->table->module
 			? "$this->appNamespace\\Module\\{$this->table->module}\\Model"
 			: "$this->buildNamespace\\Model";
+		$this->writer = new Writer;
 	}
 
 
@@ -44,7 +47,7 @@ class PropertyGenerator
 	}
 
 
-	public function createEntityProperties(string $path): PhpFile
+	public function createEntityProperties(string $path): void
 	{
 		if (!($content = @file_get_contents($path))) {
 			throw new InvalidArgumentException("File '$path' does not exist.");
@@ -95,11 +98,11 @@ class PropertyGenerator
 			}
 		}
 		$class->setComment(implode("\n", $comments));
-		return $file;
+		$this->writer->write($path, $file);
 	}
 
 
-	public function createEntityPropertyManyHasMany(string $path, Foreign $from, Foreign $to, bool $isMain = false): PhpFile
+	public function createEntityPropertyManyHasMany(string $path, Foreign $from, Foreign $to, bool $isMain = false): void
 	{
 		$file = PhpFile::fromCode(@file_get_contents($path));
 		/** @var PhpNamespace $namespace */
@@ -122,11 +125,11 @@ class PropertyGenerator
 		}
 		$class->setComment(implode("\n", $comments));
 		$namespace->addUse(ManyHasMany::class);
-		return $file;
+		$this->writer->write($path, $file);
 	}
 
 
-	public function createEntityPropertyOneHasMany(string $path, Foreign $foreign): PhpFile
+	public function createEntityPropertyOneHasMany(string $path, Foreign $foreign): void
 	{
 		$file = PhpFile::fromCode(@file_get_contents($path));
 		/** @var PhpNamespace $namespace */
@@ -149,11 +152,11 @@ class PropertyGenerator
 		}
 		$class->setComment(implode("\n", $comments));
 		$namespace->addUse(OneHasMany::class);
-		return $file;
+		$this->writer->write($path, $file);
 	}
 
 
-	public function sortEntityProperties(string $path): PhpFile
+	public function sortEntityProperties(string $path): void
 	{
 		$file = PhpFile::fromCode(@file_get_contents($path));
 		/** @var ClassType $class */
@@ -185,6 +188,6 @@ class PropertyGenerator
 			}
 		}
 		$class->setComment(implode("\n", $comments));
-		return $file;
+		$this->writer->write($path, $file);
 	}
 }

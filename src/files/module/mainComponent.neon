@@ -1,0 +1,14 @@
+name: %name%
+namespace: %namespace%
+uses:
+	Webovac\Core\Model\CmsEntity:
+methods:
+	__construct:
+		promotedParameters:
+			entity:
+				visibility: private
+				type: Webovac\Core\Model\CmsEntity
+				nullable: true
+	render:
+		returnType: void
+		body: %renderMethod.body%

@@ -268,7 +268,7 @@ class Processor
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': creating command ');
 		$this->printer->printText($command->name, 'white');
-		$this->generator->createCommand($command->name, $module?->name);
+		$this->generator->createCommand($command, $module);
 		$this->count++;
 		$this->printer->printOk();
 	}

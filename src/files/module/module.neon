@@ -1,0 +1,25 @@
+name: %name%
+namespace: %namespace%
+implements:
+	Webovac\Core\Module:
+uses:
+	Stepapo\Model\Definition\DefinitionGroup: [hide: %hideDefinition%]
+	Webovac\Core\Core: [hide: %hideDefinition%]
+	Stepapo\Model\Manipulation\ManipulationGroup: [hide: %hideManipulation%]
+methods:
+	getModuleName:
+		static: true
+		returnType: string
+		body: %getModuleName.body%
+	getCliSetup:
+		static: true
+		returnType: array
+		body: "return ['icon' => '', 'color' => 'white/blue'];"
+	getDefinitionGroup:
+		returnType: Stepapo\Model\Definition\DefinitionGroup
+		body: %getDefinitionGroup.body%
+		hide: %hideDefinition%
+	getManipulationGroup:
+		returnType: array
+		body: %getManipulationGroup.body%
+		hide: %hideManipulation%

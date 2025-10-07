@@ -4,21 +4,14 @@ declare(strict_types=1);
 
 namespace Webovac\Generator;
 
-use Nette\Application\UI\Form;
-use Nette\PhpGenerator\ClassType;
-use Nette\PhpGenerator\InterfaceType;
 use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;
-use Nette\PhpGenerator\PhpNamespace;
-use Nette\Utils\ArrayHash;
 use Nette\Utils\Arrays;
-use PhpParser\Node\Expr\AssignOp\Mod;
-use Stepapo\Dataset\Control\Dataset\DatasetControl;
-use Stepapo\Utils\Factory;
 use Webovac\Core\Attribute\RequiresEntity;
 use Webovac\Generator\Config\Component;
 use Webovac\Generator\Config\Module;
+use Webovac\Generator\Lib\Writer;
 
 
 class ComponentGenerator
@@ -32,6 +25,8 @@ class ComponentGenerator
 	private string $namespace;
 	private string $entityName;
 	private string $lentityName;
+	private FileGenerator $fileGenerator;
+	private Writer $writer;
 
 
 	public function __construct(
@@ -48,140 +43,88 @@ class ComponentGenerator
 		$this->name = $this->component->name;
 		$this->lname = lcfirst($this->name);
 		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\{$this->module->name}" : '') . "\Control\\$this->name";
+		$this->fileGenerator = new FileGenerator;
+		$this->writer = new Writer;
 	}
 
 
-	public function createTemplate(string $base): PhpFile
+	public function createTemplate(string $path): void
 	{
-		$class = (new ClassType("{$this->name}Template"))
-			->setExtends($base);
-
-		$namespace = (new PhpNamespace("{$this->namespace}"))
-			->addUse($base)
-			->add($class);
-
-		if ($this->component->entity) {
-			$class->addProperty($this->lentityName)
-				->setPublic()
-				->setType($this->component->entity);
-			$namespace->addUse($this->component->entity);
-		}
-
-		$file = (new PhpFile())->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		$this->fileGenerator->write($path, __DIR__ . '/files/component/template.neon', [
+			'name' => "{$this->name}Template",
+			'namespace' => $this->namespace,
+			'lentity' => $this->component->entity ? $this->lentityName : 'lentity',
+			'entity' => $this->component->entity ?: 'entity',
+			'hideEntity' => !$this->component->entity,
+		]);
 	}
 
 
-	public function createControl(string $base): PhpFile
+	public function createControl(string $path): void
 	{
-		$constructMethod = (new Method('__construct'))
-			->setPublic();
-
-		$renderMethod = (new Method('render'))
-			->setPublic()
-			->setReturnType('void');
-
-		$class = (new ClassType("{$this->name}Control"))
-			->setExtends($base)
-			->addComment("@property {$this->name}Template \$template")
-			->addMember($constructMethod)
-			->addMember($renderMethod);
-
-		$namespace = (new PhpNamespace($this->namespace))
-			->addUse($base)
-			->add($class);
-
+		$renderMethodBody = [];
 		if ($this->component->entity) {
-			$constructMethod
-				->addPromotedParameter($this->lentityName)
-				->setPrivate()
-				->setType($this->component->entity);
-			$renderMethod->addBody("\$this->template->$this->lentityName = \$this->$this->lentityName;");
-			$namespace->addUse($this->component->entity);
+			$renderMethodBody[] = "\$this->template->$this->lentityName = \$this->$this->lentityName;";
 		}
-
-		if ($this->component->withTemplateName) {
-			$class->addConstant('TEMPLATE_DEFAULT', 'default')
-				->setType('string');
-			$constructMethod
-				->addPromotedParameter('moduleClass')
-				->setType('string');
-			$constructMethod
-				->addPromotedParameter('templateName')
-				->setType('string');
-		}
-
-		$renderMethod->addBody(
-			$this->component->withTemplateName
-				? "\$this->template->renderFile(\$this->moduleClass, self::class, \$this->templateName);"
-				: "\$this->template->render(__DIR__ . '/{$this->lname}.latte');"
-		);
-
-		if ($this->component->type) {
-			if ($this->component->factory) {
-				$constructMethod
-					->addPromotedParameter($this->component->type . 'Factory')
-					->setPrivate()
-					->setType($this->component->factory);
-				$namespace->addUse($this->component->factory);
-			}
-			switch ($this->component->type) {
-				case self::TYPE_FORM:
-					$this->createFormMethods($namespace, $class);
-					break;
-				case self::TYPE_DATASET:
-					$this->createDatasetMethods($namespace, $class);
-					break;
-			}
-		}
-
-		$file = (new PhpFile)->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		$renderMethodBody[] = $this->component->withTemplateName
+			? "\$this->template->renderFile(\$this->moduleClass, self::class, \$this->templateName);"
+			: "\$this->template->render(__DIR__ . '/{$this->lname}.latte');";
+		$createComponentFormMethodBody = [];
+		$createComponentFormMethodBody[] = $this->component->factory
+			? "\$form = \$this->{$this->component->type}Factory->create();"
+			: "\$form = new Form;";
+		$createComponentFormMethodBody[] = <<<EOT
+\$form->onSuccess[] = [\$this, 'formSucceeded'];
+return \$form;
+EOT;
+		$dataset = <<<EOT
+	__DIR__ . '/$this->lname.neon',
+	[
+		'collection' => '',
+		'repository' => '',
+	],
+EOT;
+		$this->fileGenerator->write($path, __DIR__ . '/files/component/control.neon', [
+			'name' => "{$this->name}Control",
+			'namespace' => $this->namespace,
+			'comments' => "@property {$this->name}Template \$template",
+			'lentity' => $this->component->entity ? $this->lentityName : 'lentity',
+			'entity' => $this->component->entity ?: 'entity',
+			'hideEntity' => !$this->component->entity,
+			'factoryName' => "{$this->component->type}Factory",
+			'factory' => $this->component->factory ?: 'factory',
+			'hideFactory' => !$this->component->factory,
+			'renderMethod.body' => $renderMethodBody,
+			'hideTemplateName' => !$this->component->withTemplateName,
+			'createComponentFormMethod.body' => $createComponentFormMethodBody,
+			'createComponentDatasetMethod.body' => $this->component->factory
+				? "return \$this->{$this->component->type}Factory->create(\n$dataset\n);"
+				: "return Dataset::createFromNeon(\n$dataset\n);",
+			'hideForm' => $this->component->type !== self::TYPE_FORM,
+			'hideDataset' => $this->component->type !== self::TYPE_DATASET,
+		]);
 	}
 
 
-	public function createFactory(): PhpFile
+	public function createFactory(string $path): void
 	{
-		$createMethod = (new Method('create'))
-			->setReturnType("$this->namespace\\{$this->name}Control");
-
-		$class = (new InterfaceType("I{$this->name}Control"))
-			->setExtends(Factory::class)
-			->addMember($createMethod);
-
-		$namespace = (new PhpNamespace($this->namespace))
-			->add($class)
-			->addUse(Factory::class);
-
-		if ($this->component->entity) {
-			$createMethod
-				->addParameter($this->lentityName)
-				->setType($this->component->entity);
-			$namespace->addUse($this->component->entity);
-		}
-
-		if ($this->component->withTemplateName) {
-			$createMethod
-				->addParameter('moduleClass', new Literal("{$this->module}::class"))
-				->setType('string');
-			$namespace->addUse("App\\Module\\$this->module\\$this->module");
-			$createMethod
-				->addParameter('templateName', new Literal("{$this->name}Control::TEMPLATE_DEFAULT"))
-				->setType('string');
-		}
-
-		$file = (new PhpFile)->setStrictTypes();
-		$file->addNamespace($namespace);
-
-		return $file;
+		$this->fileGenerator->write($path, __DIR__ . '/files/component/factory.neon', [
+			'name' => "I{$this->name}Control",
+			'namespace' => $this->namespace,
+			'moduleClass' => "App\\Module\\{$this->module->name}\\{$this->module->name}",
+			'lentity' => $this->component->entity ? $this->lentityName : 'lentity',
+			'entity' => $this->component->entity ?: 'entity',
+			'hideEntity' => !$this->component->entity,
+			'hideFactory' => !$this->component->factory,
+			'hideTemplateName' => !$this->component->withTemplateName,
+			'createMethod.returnType' => "$this->namespace\\{$this->name}Control",
+			'moduleClass.value' => new Literal("{$this->module->name}::class"),
+			'templateName.value' => new Literal("{$this->name}Control::TEMPLATE_DEFAULT"),
+		]);
 	}
 
 
-	public function createLatte(): string
+	public function createLatte(string $path): void
 	{
 		$latte = <<<EOT
 {templateType {$this->namespace}\\{$this->name}Template}
@@ -194,32 +137,33 @@ EOT;
 
 EOT;
 		}
-
-		return $latte;
+		$this->writer->write($path, $latte);
 	}
 
 
-	public function createDatasetNeon(): string
+	public function createDatasetNeon(string $path): void
 	{
-		return <<<EOT
+		$neon = <<<EOT
 collection: %collection%
 repository: %repository%
 columns:
 
 EOT;
+		$this->writer->write($path, $neon);
 	}
 
 
-	public function createMenuNeon(): string
+	public function createMenuNeon(string $path): void
 	{
-		return <<<EOT
+		$neon = <<<EOT
 buttons:
 
 EOT;
+		$this->writer->write($path, $neon);
 	}
 
 
-	public function updateMainComponent(string $path): PhpFile
+	public function updateMainComponent(string $path): void
 	{
 		$file = PhpFile::fromCode(file_get_contents($path));
 		$control = "$this->namespace\\{$this->name}Control";
@@ -260,60 +204,6 @@ EOT);
 			$namespace->removeUse($factory);
 			$namespace->removeUse($control);
 		}
-
-		return $file;
-	}
-
-
-	private function createFormMethods(PhpNamespace $namespace, ClassType $class): void
-	{
-		$createComponentMethod = (new Method('createComponentForm'))
-			->setPublic()
-			->setReturnType(Form::class)
-			->addBody(
-				$this->component->factory
-					? "\$form = \$this->{$this->component->type}Factory->create();"
-					: "\$form = new Form;"
-			)
-			->addBody("\$form->onSuccess[] = [\$this, 'formSucceeded'];")
-			->addBody("return \$form;");
-
-		$formSucceededMethod = (new Method('formSucceeded'))
-			->setPublic()
-			->setReturnType('void');
-		$formSucceededMethod->addParameter('form')->setType(Form::class);
-		$formSucceededMethod->addParameter('values')->setType(ArrayHash::class);
-
-		$class
-			->addMember($createComponentMethod)
-			->addMember($formSucceededMethod);
-		$namespace
-			->addUse(Form::class)
-			->addUse(ArrayHash::class);
-	}
-
-
-	private function createDatasetMethods(PhpNamespace $namespace, ClassType $class): void
-	{
-		$factoryBody = <<<EOT
-	__DIR__ . '/$this->lname.neon',
-	[
-		'collection' => '',
-		'repository' => '',
-	],
-EOT;
-
-		$createComponentMethod = (new Method('createComponentDataset'))
-			->setPublic()
-			->setReturnType(DatasetControl::class)
-			->addBody(
-				$this->component->factory
-					? "return \$this->{$this->component->type}Factory->create(\n$factoryBody\n);"
-					: "return Dataset::createFromNeon(\n$factoryBody\n);"
-			);
-
-		$class
-			->addMember($createComponentMethod);
-		$namespace->addUse(DatasetControl::class);
+		$this->writer->write($path, $file);
 	}
 }

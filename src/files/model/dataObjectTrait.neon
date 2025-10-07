@@ -1,0 +1,22 @@
+name: %name%
+namespace: %namespace%
+extends: %extends%
+type: %type%
+uses:
+	DateTimeInterface:
+properties:
+	id:
+		type: int
+		nullable: true
+	createdByPerson:
+		type: int|string
+		nullable: true
+	updatedByPerson:
+		type: int|string
+		nullable: true
+	createdAt:
+		type: DateTimeInterface
+		nullable: true
+	updatedAt:
+		type: DateTimeInterface
+		nullable: true

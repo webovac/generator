@@ -1,0 +1,3 @@
+name: %name%
+namespace: %namespace%
+extends: Stepapo\Utils\DI\StepapoExtension

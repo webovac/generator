@@ -41,7 +41,7 @@ class Writer
 		$traits = $class->getTraits();
 		uasort($traits, function (TraitUse $a, TraitUse $b) {
 			if (str_contains($a->getName(), 'Core') xor (str_contains($b->getName(), 'Core'))) {
-				return str_contains($a->getName(), 'Core') <=> str_contains($b->getName(), 'Core');
+				return str_contains($b->getName(), 'Core') <=> str_contains($a->getName(), 'Core');
 			}
 			return strcmp($a->getName(), $b->getName());
 		});

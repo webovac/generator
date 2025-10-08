@@ -1,4 +1,4 @@
-name: BaseTemplate
+name: %name%
 namespace: %namespace%
 extends: Nette\Bridges\ApplicationLatte\Template
 attributes:

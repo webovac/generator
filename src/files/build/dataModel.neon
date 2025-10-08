@@ -1,4 +1,4 @@
-name: DataModel
+name: %name%
 namespace: %namespace%
 implements:
 	Stepapo\Utils\Injectable:

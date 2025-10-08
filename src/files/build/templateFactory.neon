@@ -1,4 +1,4 @@
-name: BaseTemplateFactory
+name: %name%
 namespace: %namespace%
 extends: Nette\Bridges\ApplicationLatte\TemplateFactory
 implements:

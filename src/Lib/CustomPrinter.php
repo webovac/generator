@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Webovac\Generator;
+namespace Webovac\Generator\Lib;
 
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\Printer;

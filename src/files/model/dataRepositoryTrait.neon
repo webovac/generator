@@ -1,0 +1,4 @@
+name: %name%
+namespace: %namespace%
+extends: %extends%
+type: %type%

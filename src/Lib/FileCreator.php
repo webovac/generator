@@ -2,33 +2,29 @@
 
 declare(strict_types=1);
 
-namespace Webovac\Generator;
+namespace Webovac\Generator\Lib;
 
 use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\Constant as PhpConstant;
 use Nette\PhpGenerator\EnumType;
 use Nette\PhpGenerator\InterfaceType;
+use Nette\PhpGenerator\Method as PhpMethod;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
-use Nette\PhpGenerator\TraitType;
-use Nette\PhpGenerator\Method as PhpMethod;
 use Nette\PhpGenerator\Property as PhpProperty;
-use Nette\PhpGenerator\Constant as PhpConstant;
+use Nette\PhpGenerator\TraitType;
+use Stepapo\Utils\Service;
 use Webovac\Generator\File\Constant;
 use Webovac\Generator\File\File;
 use Webovac\Generator\File\Method;
 use Webovac\Generator\File\Property;
-use Webovac\Generator\Lib\Writer;
 
 
-class FileGenerator
+class FileCreator implements Service
 {
-	private Writer $writer;
-
-
-	public function __construct()
-	{
-		$this->writer = new Writer;
-	}
+	public function __construct(
+		private Writer $writer,
+	) {}
 
 
 	public function create(string $file, array $params = []): PhpFile

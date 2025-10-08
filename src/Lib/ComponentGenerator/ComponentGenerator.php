@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Webovac\Generator;
+namespace Webovac\Generator\Lib\ComponentGenerator;
 
 use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\Method;
@@ -11,29 +11,35 @@ use Nette\Utils\Arrays;
 use Webovac\Core\Attribute\RequiresEntity;
 use Webovac\Generator\Config\Component;
 use Webovac\Generator\Config\Module;
-use Webovac\Generator\Lib\Writer;
+use Webovac\Generator\Lib\BaseGenerator;
+use Webovac\Generator\Lib\Generator;
+use Webovac\Generator\Lib\ModuleGenerator\ModuleGenerator;
+use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 
 
-class ComponentGenerator
+class ComponentGenerator extends BaseGenerator
 {
-	public const TYPE_FORM = 'form';
-	public const TYPE_DATASET = 'dataset';
-	public const TYPE_MENU = 'menu';
+	public const string TEMPLATE = 'template';
+	public const string CONTROL = 'control';
+	public const string FACTORY = 'factory';
+	public const string LATTE = 'latte';
+	public const string DATASET_NEON = 'datasetNeon';
+	public const string MENU_NEON = 'menuNeon';
+
+	public const string TYPE_FORM = 'form';
+	public const string TYPE_DATASET = 'dataset';
+	public const string TYPE_MENU = 'menu';
 
 	private string $name;
 	private string $lname;
-	private string $namespace;
 	private string $entityName;
 	private string $lentityName;
-	private FileGenerator $fileGenerator;
-	private Writer $writer;
 
 
 	public function __construct(
-		private string $appNamespace,
 		private Component $component,
-		private ?Module $module = null,
-		private string $mode = Generator::MODE_ADD,
+		private ?Module $module,
+		ISetupProvider $setupProviderFactory,
 	) {
 		if ($this->component->entity) {
 			$parts = explode('\\', $this->component->entity);
@@ -42,17 +48,45 @@ class ComponentGenerator
 		}
 		$this->name = $this->component->name;
 		$this->lname = lcfirst($this->name);
-		$this->namespace = $this->appNamespace . ($this->module ? "\Module\\{$this->module->name}" : '') . "\Control\\$this->name";
-		$this->fileGenerator = new FileGenerator;
-		$this->writer = new Writer;
+		$this->setupProvider = $setupProviderFactory->create(
+			name: $this->component->name,
+			module: $this->module,
+		);
+	}
+	
+	
+	public function generate(): void
+	{
+		$this->createTemplate();
+		$this->createFactory();
+		$this->createControl();
+		$this->createLatte();
+		if ($this->component->type === ComponentGenerator::TYPE_DATASET) {
+			$this->createDatasetNeon();
+		}
+		if ($this->component->type === ComponentGenerator::TYPE_MENU) {
+			$this->createMenuNeon();
+		}
+		if (!$this->module) {
+			return;
+		}
+		$this->updateMainComponent();
 	}
 
 
-	public function createTemplate(string $path): void
+	public function remove(): void
 	{
-		$this->fileGenerator->write($path, __DIR__ . '/files/component/template.neon', [
-			'name' => "{$this->name}Template",
-			'namespace' => $this->namespace,
+		$this->writer->remove($this->setupProvider->getBasePath(self::CONTROL));
+		if (!$this->module) {
+			return;
+		}
+		$this->updateMainComponent(Generator::MODE_REMOVE);
+	}
+
+
+	private function createTemplate(): void
+	{
+		$this->write(self::TEMPLATE, [
 			'lentity' => $this->component->entity ? $this->lentityName : 'lentity',
 			'entity' => $this->component->entity ?: 'entity',
 			'hideEntity' => !$this->component->entity,
@@ -60,7 +94,7 @@ class ComponentGenerator
 	}
 
 
-	public function createControl(string $path): void
+	private function createControl(): void
 	{
 		$renderMethodBody = [];
 		if ($this->component->entity) {
@@ -84,9 +118,7 @@ EOT;
 		'repository' => '',
 	],
 EOT;
-		$this->fileGenerator->write($path, __DIR__ . '/files/component/control.neon', [
-			'name' => "{$this->name}Control",
-			'namespace' => $this->namespace,
+		$this->write(self::CONTROL, [
 			'comments' => "@property {$this->name}Template \$template",
 			'lentity' => $this->component->entity ? $this->lentityName : 'lentity',
 			'entity' => $this->component->entity ?: 'entity',
@@ -106,28 +138,27 @@ EOT;
 	}
 
 
-	public function createFactory(string $path): void
+	private function createFactory(): void
 	{
-		$this->fileGenerator->write($path, __DIR__ . '/files/component/factory.neon', [
-			'name' => "I{$this->name}Control",
-			'namespace' => $this->namespace,
-			'moduleClass' => "App\\Module\\{$this->module->name}\\{$this->module->name}",
+		$this->write(self::FACTORY, [
+			'moduleClass' => $this->setupProvider->getFqn(ModuleGenerator::MODULE),
 			'lentity' => $this->component->entity ? $this->lentityName : 'lentity',
 			'entity' => $this->component->entity ?: 'entity',
 			'hideEntity' => !$this->component->entity,
 			'hideFactory' => !$this->component->factory,
 			'hideTemplateName' => !$this->component->withTemplateName,
-			'createMethod.returnType' => "$this->namespace\\{$this->name}Control",
-			'moduleClass.value' => new Literal("{$this->module->name}::class"),
-			'templateName.value' => new Literal("{$this->name}Control::TEMPLATE_DEFAULT"),
+			'createMethod.returnType' => $this->setupProvider->getFqn(self::CONTROL),
+			'moduleClass.value' => new Literal("{$this->setupProvider->getName(ModuleGenerator::MODULE)}::class"),
+			'templateName.value' => new Literal("{$this->setupProvider->getName(self::CONTROL)}::TEMPLATE_DEFAULT"),
 		]);
 	}
 
 
-	public function createLatte(string $path): void
+	private function createLatte(): void
 	{
+		$path = $this->setupProvider->getPath(self::LATTE);
 		$latte = <<<EOT
-{templateType {$this->namespace}\\{$this->name}Template}
+{templateType {$this->setupProvider->getFqn(self::TEMPLATE)}}
 
 
 EOT;
@@ -141,8 +172,9 @@ EOT;
 	}
 
 
-	public function createDatasetNeon(string $path): void
+	private function createDatasetNeon(): void
 	{
+		$path = $this->setupProvider->getPath(self::DATASET_NEON);
 		$neon = <<<EOT
 collection: %collection%
 repository: %repository%
@@ -153,8 +185,9 @@ EOT;
 	}
 
 
-	public function createMenuNeon(string $path): void
+	private function createMenuNeon(): void
 	{
+		$path = $this->setupProvider->getPath(self::MENU_NEON);
 		$neon = <<<EOT
 buttons:
 
@@ -163,17 +196,18 @@ EOT;
 	}
 
 
-	public function updateMainComponent(string $path): void
+	private function updateMainComponent($mode = Generator::MODE_ADD): void
 	{
+		$path = $this->setupProvider->getPath(ModuleGenerator::MAIN_COMPONENT);
 		$file = PhpFile::fromCode(file_get_contents($path));
-		$control = "$this->namespace\\{$this->name}Control";
-		$factory = "$this->namespace\\I{$this->name}Control";
+		$control = $this->setupProvider->getFqn(self::CONTROL);
+		$factory = $this->setupProvider->getFqn(self::FACTORY);
 
 		$namespace = Arrays::first($file->getNamespaces());
 		$class = Arrays::first($file->getClasses());
 
 		$constructMethod = $class->getMethod('__construct');
-		if ($this->mode === Generator::MODE_ADD) {
+		if ($mode === Generator::MODE_ADD) {
 			$constructMethod->addPromotedParameter($this->lname)
 				->setPrivate()
 				->setType($factory);

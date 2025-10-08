@@ -10,11 +10,11 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\TraitUse;
 use Nette\Utils\Arrays;
 use Nette\Utils\FileSystem;
+use Stepapo\Utils\Service;
 use Webovac\Generator\Config\Implement;
-use Webovac\Generator\CustomPrinter;
 
 
-class Writer
+class Writer implements Service
 {
 	public function write(string $path, PhpFile|string|null $file = null): void
 	{

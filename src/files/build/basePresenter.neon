@@ -1,3 +1,3 @@
-name: BasePresenter
+name: %name%
 namespace: %namespace%
 extends: Nette\Application\UI\Presenter

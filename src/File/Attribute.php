@@ -6,7 +6,6 @@ namespace Webovac\Generator\File;
 
 use Stepapo\Utils\Attribute\KeyProperty;
 use Stepapo\Utils\Attribute\ToArray;
-use Stepapo\Utils\Attribute\ValueProperty;
 use Stepapo\Utils\Config;
 
 

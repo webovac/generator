@@ -4,32 +4,27 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\Lib;
 
-use Stepapo\Generator\ComponentGenerator;
 use Stepapo\Utils\Printer;
-use Webovac\Core\Lib\Dataset\CmsDatasetFactory;
 use Webovac\Generator\Config\App;
 use Webovac\Generator\Config\Command;
 use Webovac\Generator\Config\Component;
 use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Module;
 use Webovac\Generator\Config\Service;
-use Webovac\Generator\Generator;
 
 
-class Processor
+class Processor implements \Stepapo\Utils\Service
 {
 	private int $count = 0;
 	private Printer $printer;
-	private Collector $collector;
-	private Analyzer $analyzer;
 
 
 	public function __construct(
 		private Generator $generator,
+		private Collector $collector,
+		private Analyzer $analyzer,
 	) {
 		$this->printer = new Printer;
-		$this->collector = new Collector;
-		$this->analyzer = new Analyzer;
 	}
 
 
@@ -81,6 +76,7 @@ class Processor
 
 	private function build(App $app): void
 	{
+		$this->generator->removeBuild();
 		$this->generator->createBuild();
 		$entities = [];
 		foreach ($app->modules as $module) {
@@ -90,10 +86,10 @@ class Processor
 					continue;
 				}
 				if (!array_key_exists($entity->name, $entities)) {
-					$this->generator->createBuildEntity($entity);
+					$this->generator->createBuildModel($entity);
 					$entities[$entity->name] = $entity->name;
 				}
-				$this->generator->updateBuildEntity($entity, $module);
+				$this->generator->updateBuildModel($entity, $module);
 			}
 		}
 		$this->generator->checkBuild();
@@ -104,7 +100,7 @@ class Processor
 				if (!$entity->withTraits || array_key_exists($entity->name, $entities)) {
 					continue;
 				}
-				$this->updateEntity($entity, $module);
+				$this->generator->checkBuildModel($entity, $module);
 				$entities[$entity->name] = $entity->name;
 			}
 		}
@@ -237,7 +233,7 @@ class Processor
 
 	private function updateEntity(Entity $entity, ?Module $module = null): void
 	{
-		$this->generator->checkEntity($entity, $module);
+		$this->generator->checkBuildModel($entity, $module);
 	}
 
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Webovac\Generator;
+namespace Webovac\Generator\Lib\PropertyGenerator;
 
 use Nette\InvalidArgumentException;
 use Nette\PhpGenerator\ClassType;
@@ -15,29 +15,36 @@ use Stepapo\Model\Definition\Config\Foreign;
 use Stepapo\Model\Definition\Config\Table;
 use Stepapo\Model\Orm\InternalProperty;
 use Stepapo\Model\Orm\PrivateProperty;
+use Webovac\Generator\Lib\BuildGenerator\BuildGenerator;
+use Webovac\Generator\Lib\BuildModelGenerator\BuildModelGenerator;
+use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
+use Webovac\Generator\Lib\SetupProvider\SetupProvider;
 use Webovac\Generator\Lib\Writer;
 
 class PropertyGenerator
 {
 	private string $namespace;
-	private Writer $writer;
+	private string $path;
+	private SetupProvider $setupProvider;
 
 
 	public function __construct(
-		private string $appNamespace,
-		private string $buildNamespace,
 		private Table $table,
+		private string $name,
+		private Writer $writer,
+		ISetupProvider $setupProviderFactory,
 	) {
-		$this->namespace = $this->table->module
-			? "$this->appNamespace\\Module\\{$this->table->module}\\Model"
-			: "$this->buildNamespace\\Model";
-		$this->writer = new Writer;
+		$this->setupProvider = $setupProviderFactory->create(
+			name: $this->name
+		);
+		$this->namespace = $this->setupProvider->getNamespace(BuildGenerator::MODEL);
+		$this->path = $this->setupProvider->getPath(BuildModelGenerator::ENTITY);
 	}
 
 
-	public function readEntityComments(string $path): ?string
+	public function readEntityComments(): ?string
 	{
-		if (!($content = @file_get_contents($path))) {
+		if (!($content = @file_get_contents($this->path))) {
 			return null;
 		}
 		$file = PhpFile::fromCode($content);
@@ -47,10 +54,10 @@ class PropertyGenerator
 	}
 
 
-	public function createEntityProperties(string $path): void
+	public function createEntityProperties(): void
 	{
-		if (!($content = @file_get_contents($path))) {
-			throw new InvalidArgumentException("File '$path' does not exist.");
+		if (!($content = @file_get_contents($this->path))) {
+			throw new InvalidArgumentException("File '$this->path' does not exist.");
 		}
 		$file = PhpFile::fromCode($content);
 		/** @var PhpNamespace $namespace */
@@ -98,13 +105,13 @@ class PropertyGenerator
 			}
 		}
 		$class->setComment(implode("\n", $comments));
-		$this->writer->write($path, $file);
+		$this->writer->write($this->path, $file);
 	}
 
 
-	public function createEntityPropertyManyHasMany(string $path, Foreign $from, Foreign $to, bool $isMain = false): void
+	public function createEntityPropertyManyHasMany(Foreign $from, Foreign $to, bool $isMain = false): void
 	{
-		$file = PhpFile::fromCode(@file_get_contents($path));
+		$file = PhpFile::fromCode(@file_get_contents($this->path));
 		/** @var PhpNamespace $namespace */
 		$namespace = Arrays::first($file->getNamespaces());
 		/** @var ClassType $class */
@@ -125,13 +132,13 @@ class PropertyGenerator
 		}
 		$class->setComment(implode("\n", $comments));
 		$namespace->addUse(ManyHasMany::class);
-		$this->writer->write($path, $file);
+		$this->writer->write($this->path, $file);
 	}
 
 
-	public function createEntityPropertyOneHasMany(string $path, Foreign $foreign): void
+	public function createEntityPropertyOneHasMany(Foreign $foreign): void
 	{
-		$file = PhpFile::fromCode(@file_get_contents($path));
+		$file = PhpFile::fromCode(@file_get_contents($this->path));
 		/** @var PhpNamespace $namespace */
 		$namespace = Arrays::first($file->getNamespaces());
 		/** @var ClassType $class */
@@ -152,13 +159,13 @@ class PropertyGenerator
 		}
 		$class->setComment(implode("\n", $comments));
 		$namespace->addUse(OneHasMany::class);
-		$this->writer->write($path, $file);
+		$this->writer->write($this->path, $file);
 	}
 
 
-	public function sortEntityProperties(string $path): void
+	public function sortEntityProperties(): void
 	{
-		$file = PhpFile::fromCode(@file_get_contents($path));
+		$file = PhpFile::fromCode(@file_get_contents($this->path));
 		/** @var ClassType $class */
 		$class = Arrays::first($file->getClasses());
 		$comments = explode("\n", $class->getComment() ?: '');
@@ -188,6 +195,6 @@ class PropertyGenerator
 			}
 		}
 		$class->setComment(implode("\n", $comments));
-		$this->writer->write($path, $file);
+		$this->writer->write($this->path, $file);
 	}
 }

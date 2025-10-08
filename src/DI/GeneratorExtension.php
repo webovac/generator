@@ -27,6 +27,7 @@ class GeneratorExtension extends StepapoExtension
 			'buildDir' => Expect::string('build'),
 			'buildNamespace' => Expect::string('Build'),
 			'driver' => Expect::string()->required(),
+			'database' => Expect::string(),
 		]);
 	}
 

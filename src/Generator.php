@@ -131,10 +131,7 @@ class Generator
 	}
 
 
-	public function createModel(
-		Entity $entity,
-		?Module $module = null,
-	): void
+	public function createModel(Entity $entity, ?Module $module = null): void
 	{
 		$generator = new ModelGenerator(
 			appNamespace: $this->appNamespace,

@@ -16,9 +16,6 @@ use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 
 class GeneratorExtension extends StepapoExtension
 {
-	private DecoratorExtension $decoratorExtension;
-
-
 	public function getConfigSchema(): Schema
 	{
 		return Expect::structure([
@@ -49,38 +46,5 @@ class GeneratorExtension extends StepapoExtension
 			->setFactory(PropertyProcessor::class, [
 				['defaultSchema' => $this->config->driver === 'mysql' ? $this->config->database : 'public'],
 			]);
-		$this->createDecoratorExtension();
-	}
-
-
-	protected function createDecoratorExtension(): void
-	{
-		$this->decoratorExtension = new DecoratorExtension;
-		$this->decoratorExtension->setCompiler($this->compiler, $this->prefix('decorator'));
-		$config = $this->processSchema($this->decoratorExtension->getConfigSchema(), $this->getDecoratorConfig());
-		$this->decoratorExtension->setConfig($config);
-		$this->decoratorExtension->loadConfiguration();
-	}
-
-
-	public function beforeCompile(): void
-	{
-		parent::beforeCompile();
-		$this->decoratorExtension->beforeCompile();
-	}
-
-
-	public function afterCompile(ClassType $class): void
-	{
-		parent::afterCompile($class);
-		$this->decoratorExtension->afterCompile($class);
-	}
-
-
-	private function getDecoratorConfig(): array
-	{
-		return [
-			Injectable::class => ['inject' => true],
-		];
 	}
 }

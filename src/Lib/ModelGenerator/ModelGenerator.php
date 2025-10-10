@@ -106,7 +106,7 @@ class ModelGenerator extends BaseGenerator
 	private function createConventions(): void
 	{
 		$this->write(self::CONVENTIONS, [
-			'getDefaultMappingsMethod.body' => <<<EOT
+			'getDefaultMappingsMethod.body' => <<<PHP
 return [
 	[
 	
@@ -116,7 +116,7 @@ return [
 	],
 	[]
 ];
-EOT,
+PHP,
 		]);
 	}
 

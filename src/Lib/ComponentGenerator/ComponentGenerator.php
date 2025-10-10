@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\Lib\ComponentGenerator;
 
+use JetBrains\PhpStorm\Language;
 use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;
@@ -107,17 +108,17 @@ class ComponentGenerator extends BaseGenerator
 		$createComponentFormMethodBody[] = $this->component->factory
 			? "\$form = \$this->{$this->component->type}Factory->create();"
 			: "\$form = new Form;";
-		$createComponentFormMethodBody[] = <<<EOT
+		$createComponentFormMethodBody[] = <<<PHP
 \$form->onSuccess[] = [\$this, 'formSucceeded'];
 return \$form;
-EOT;
-		$dataset = <<<EOT
+PHP;
+		$dataset = <<<PHP
 	__DIR__ . '/$this->lname.neon',
 	[
 		'collection' => '',
 		'repository' => '',
 	],
-EOT;
+PHP;
 		$this->write(self::CONTROL, [
 			'comments' => "@property {$this->name}Template \$template",
 			'lentity' => $this->component->entity ? $this->lentityName : 'lentity',
@@ -130,8 +131,8 @@ EOT;
 			'hideTemplateName' => !$this->component->withTemplateName,
 			'createComponentFormMethod.body' => $createComponentFormMethodBody,
 			'createComponentDatasetMethod.body' => $this->component->factory
-				? "return \$this->{$this->component->type}Factory->create(\n$dataset\n);"
-				: "return Dataset::createFromNeon(\n$dataset\n);",
+				? /* language=PHP */ "return \$this->{$this->component->type}Factory->create(\n$dataset\n);"
+				: /* language=PHP */ "return Dataset::createFromNeon(\n$dataset\n);",
 			'hideForm' => $this->component->type !== self::TYPE_FORM,
 			'hideDataset' => $this->component->type !== self::TYPE_DATASET,
 		]);
@@ -157,16 +158,16 @@ EOT;
 	private function createLatte(): void
 	{
 		$path = $this->setupProvider->getPath(self::LATTE);
-		$latte = <<<EOT
+		$latte = <<<LATTE
 {templateType {$this->setupProvider->getFqn(self::TEMPLATE)}}
 
 
-EOT;
+LATTE;
 		if ($this->component->type) {
-			$latte .= <<<EOT
+			$latte .= <<<LATTE
 {control {$this->component->type}}
 
-EOT;
+LATTE;
 		}
 		$this->writer->write($path, $latte);
 	}
@@ -175,12 +176,12 @@ EOT;
 	private function createDatasetNeon(): void
 	{
 		$path = $this->setupProvider->getPath(self::DATASET_NEON);
-		$neon = <<<EOT
+		$neon = <<<NEON
 collection: %collection%
 repository: %repository%
 columns:
 
-EOT;
+NEON;
 		$this->writer->write($path, $neon);
 	}
 
@@ -188,10 +189,10 @@ EOT;
 	private function createMenuNeon(): void
 	{
 		$path = $this->setupProvider->getPath(self::MENU_NEON);
-		$neon = <<<EOT
+		$neon = <<<NEON
 buttons:
 
-EOT;
+NEON;
 		$this->writer->write($path, $neon);
 	}
 
@@ -216,13 +217,13 @@ EOT;
 				->setPublic()
 				->setReturnType($control)
 				->setBody($this->component->entity
-					? <<<EOT
+					? <<<PHP
 assert(\$this->entity instanceof $this->entityName);
 return \$this->$this->lname->create(\$this->entity);
-EOT
-					: <<<EOT
+PHP
+					: <<<PHP
 return \$this->$this->lname->create();
-EOT);
+PHP);
 			$class->addMember($createComponentMethod, true);
 			$namespace
 				->addUse($factory)

@@ -59,7 +59,7 @@ class BuildModelGenerator extends BaseGenerator
 				"@method {$this->setupProvider->getName(self::DATA_OBJECT)} getData(bool \$neon = false, bool \$forCache = false, ?array \$select = null)",
 			],
 			'data' => $this->setupProvider->getFqn(self::DATA_OBJECT),
-			'getDataClassMethod.body' => "return {$this->setupProvider->getName(self::DATA_OBJECT)}::class;",
+			'getDataClassMethod.body' => /* language=PHP */ "return {$this->setupProvider->getName(self::DATA_OBJECT)}::class;",
 		]);
 	}
 
@@ -68,7 +68,7 @@ class BuildModelGenerator extends BaseGenerator
 	{
 		$this->write(self::MAPPER, [
 			'hideConventions' => !$this->entity->withConventions,
-			'getDataClassMethod.body' => <<<EOT
+			'getDataClassMethod.body' => <<<PHP
 return new {$this->setupProvider->getName(ModelGenerator::CONVENTIONS)}(
 	\$this->createInflector(),
 	\$this->connection,
@@ -76,7 +76,7 @@ return new {$this->setupProvider->getName(ModelGenerator::CONVENTIONS)}(
 	\$this->getRepository()->getEntityMetadata(),
 	\$this->cache,
 );
-EOT,
+PHP,
 		]);
 	}
 
@@ -94,7 +94,7 @@ EOT,
 			'person' => "{$this->setupProvider->getBuildNamespace()}\Model\Person\Person",
 			'hidePerson' => $this->name === 'Person',
 			'data' => $this->setupProvider->getFqn(self::DATA_OBJECT),
-			'getEntityClassNamesMethod.body' => "return [$this->name::class];",
+			'getEntityClassNamesMethod.body' => /* language=PHP */ "return [$this->name::class];",
 		]);
 	}
 

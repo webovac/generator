@@ -98,15 +98,15 @@ class ModuleGenerator extends BaseGenerator
 		$this->write(self::MODULE, [
 			'hideDefinition' => !$this->module->withInstallGroups,
 			'hideManipulation' => !$this->module->withMigrationGroup,
-			'getModuleName.body' => "return '$this->lname';",
-			'getDefinitionGroup.body' => <<<EOT
+			'getModuleName.body' => /* language=PHP */ "return '$this->lname';",
+			'getDefinitionGroup.body' => <<<PHP
 return new DefinitionGroup($this->name::getModuleName(), $this->name::class, [Core::getModuleName()]);
-EOT,
-			'getManipulationGroup.body' => <<<EOT
+PHP,
+			'getManipulationGroup.body' => <<<PHP
 return [
 	'' => new ManipulationGroup('', '', []),
 ];
-EOT,
+PHP,
 		]);
 	}
 
@@ -118,13 +118,13 @@ EOT,
 			'mainControlInterface' => $this->setupProvider->getFqn(self::MAIN_FACTORY),
 			'lname' => $this->lname,
 			'injectStartupMethod.name' => "inject{$this->name}Startup",
-			'injectStartupMethod.body' => <<<EOT
+			'injectStartupMethod.body' => <<<PHP
 \$this->onStartup[] = function () {
 	
 };
-EOT,
+PHP,
 			'createComponentMethod.name' => "createComponent$this->name",
-			'createComponentMethod.body' => "return \$this->$this->lname->create(\$this->entity);",
+			'createComponentMethod.body' => /* language=PHP */ "return \$this->$this->lname->create(\$this->entity);",
 		]);
 	}
 
@@ -145,13 +145,13 @@ EOT,
 	{
 		$this->write(self::TEMPLATE_FACTORY_TRAIT, [
 			'injectCreateMethod.name' => "inject{$this->name}Create",
-			'injectCreateMethod.body' => <<<EOT
+			'injectCreateMethod.body' => <<<PHP
 \$this->onCreate[] = function (Template \$template) {
 	if (\$template instanceof BaseTemplate) {
 
 	}
 };
-EOT,
+PHP,
 		]);
 	}
 
@@ -159,7 +159,7 @@ EOT,
 	private function createMainComponent(): void
 	{
 		$this->write(self::MAIN_COMPONENT, [
-			'renderMethod.body' => "\$this->template->render(__DIR__ . '/$this->lname.latte');",
+			'renderMethod.body' => /* language=PHP */ "\$this->template->render(__DIR__ . '/$this->lname.latte');",
 		]);
 	}
 
@@ -199,10 +199,10 @@ EOT,
 	private function createMainLatte(): void
 	{
 		$path = $this->setupProvider->getPath(self::MAIN_LATTE);
-		$latte = <<<EOT
+		$latte = <<<PHP
 {templateType {$this->setupProvider->getFqn(self::MAIN_TEMPLATE)}}
 
-EOT;
+PHP;
 		$this->writer->write($path, $latte);
 	}
 
@@ -210,10 +210,10 @@ EOT;
 	private function createConfigNeon(): void
 	{
 		$path = $this->setupProvider->getPath(self::CONFIG_NEON);
-		$neon = <<<EOT
+		$neon = <<<NEON
 services:
 
-EOT;
+NEON;
 		$this->writer->write($path, $neon);
 	}
 
@@ -229,7 +229,7 @@ EOT;
 	{
 		$path = $this->setupProvider->getPath(self::MANIPULATION_NEON);
 		if ($this->module->type === 'module') {
-			$neon = <<<EOT
+			$neon = <<<NEON
 class: Build\Model\Module\ModuleData
 items:
 	$this->name:
@@ -248,9 +248,9 @@ items:
 		tree:
 			$this->name:Home:
 
-EOT;
+NEON;
 		} else if ($this->module->type === 'web') {
-			$neon = <<<EOT
+			$neon = <<<NEON
 class: Build\Model\Web\WebData
 items:
 	$this->lname:
@@ -274,7 +274,7 @@ items:
 		tree:
 			Home:
 
-EOT;
+NEON;
 		}
 		$this->writer->write($path, $neon);
 	}

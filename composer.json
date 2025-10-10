@@ -16,8 +16,9 @@
 	},
 	"require": {
 		"php": ">=8.3",
-		"webovac/core": "dev-main",
-        "stepapo/file-builder": "dev-main"
+		"nette/di": "^3.2",
+        "stepapo/file-builder": "dev-main",
+        "stepapo/model": "dev-main"
 	},
 	"autoload": {
 		"psr-4": {

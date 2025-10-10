@@ -21,6 +21,7 @@ use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 use Webovac\Generator\Lib\SetupProvider\SetupProvider;
 use Webovac\Generator\Lib\Writer;
 
+
 class PropertyGenerator
 {
 	private string $namespace;

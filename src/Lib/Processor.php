@@ -28,7 +28,7 @@ class Processor implements \Stepapo\Utils\Service
 	}
 
 
-	public function process(array $folders, string $appDir, string $buildDir): int
+	public function process(array $folders): int
 	{
 		$start = microtime(true);
 		$this->printer->printBigSeparator();
@@ -36,7 +36,7 @@ class Processor implements \Stepapo\Utils\Service
 		$this->printer->printSeparator();
 		try {
 			$app = $this->collector->getApp($folders);
-			$old = $this->analyzer->getApp($appDir, $buildDir);
+			$old = $this->analyzer->getApp();
 			$this->processApp($app, $old);
 			if ($this->count === 0) {
 				$this->printer->printLine('No changes');

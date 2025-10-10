@@ -19,6 +19,10 @@ extensions:
     webovac.generator: Webovac\Generator\DI\GeneratorExtension
 
 webovac.generator:
+    appDir: app
+    appNamespace: App
+    buildDir: build
+    buildNamespace: Build
     driver: # pgsql|mysql
     database: # for mysql set default db name
 ```
@@ -37,7 +41,7 @@ $container = $configurator->createContainer();
 
 ### Files
 
-Analyzes project files in App folder, compares to file configuration and creates, updates or remove files if needed.
+Analyzes project files in App and Build folders, compares to file configuration and creates, updates or remove files if needed.
 
 - `config/files/app.neon`
 
@@ -55,11 +59,8 @@ modules:
 - `bin/generate.php`
 
 ```php
-$container->getByType(Webovac\Generator\Lib\Processor::class)->process(
-    folders: [__DIR__ . '/../config/files'],
-    appDir: __DIR__ . '/../app',
-    buildDir: __DIR__ . '/../build',
-);
+$folders = [__DIR__ . '/../config/files'];
+$container->getByType(Webovac\Generator\Lib\Processor::class)->process($folders);
 ```
 
 ### Entity Properties

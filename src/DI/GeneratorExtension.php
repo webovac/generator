@@ -7,6 +7,7 @@ namespace Webovac\Generator\DI;
 use Nette\Schema\Expect;
 use Nette\Schema\Schema;
 use Stepapo\Utils\DI\StepapoExtension;
+use Webovac\Generator\Lib\Analyzer;
 use Webovac\Generator\Lib\PropertyProcessor;
 use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 
@@ -42,6 +43,11 @@ class GeneratorExtension extends StepapoExtension
 		$builder->addDefinition($this->prefix('propertyProcessor'))
 			->setFactory(PropertyProcessor::class, [
 				['defaultSchema' => $this->config->driver === 'mysql' ? $this->config->database : 'public'],
+			]);
+		$builder->addDefinition($this->prefix('analyzer'))
+			->setFactory(Analyzer::class, [
+				'appDir' => $this->config->appDir,
+				'buildDir' => $this->config->buildDir,
 			]);
 	}
 }

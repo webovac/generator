@@ -9,7 +9,6 @@ use Webovac\Generator\Lib\SetupProvider\SetupProvider;
 
 abstract class BaseGenerator implements Injectable
 {
-	#[Inject] public FileCreator $fileGenerator;
 	#[Inject] public Writer $writer;
 	protected SetupProvider $setupProvider;
 
@@ -20,7 +19,7 @@ abstract class BaseGenerator implements Injectable
 
 	protected function write(string $key, array $params = []) : void
 	{
-		$this->fileGenerator->write(
+		$this->writer->createAndWrite(
 			path: $this->setupProvider->getPath($key),
 			file: $this->setupProvider->getConfig($key),
 			params: [

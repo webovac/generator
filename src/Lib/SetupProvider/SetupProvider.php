@@ -309,7 +309,7 @@ class SetupProvider
 			ComponentGenerator::DATASET_NEON,
 			ComponentGenerator::MENU_NEON => "$this->lname",
 
-			CommandGenerator::COMMAND => "{$this->name}Command",
+			CommandGenerator::COMMAND,
 			ServiceGenerator::SERVICE => $this->name,
 
 			default => throw new InvalidArgumentException("'$key' name is not defined"),

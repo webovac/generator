@@ -10,12 +10,29 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\TraitUse;
 use Nette\Utils\Arrays;
 use Nette\Utils\FileSystem;
+use Stepapo\FileBuilder\FileBuilder;
 use Stepapo\Utils\Service;
 use Webovac\Generator\Config\Implement;
 
 
 class Writer implements Service
 {
+	private FileBuilder $fileBuilder;
+
+
+	public function __construct()
+	{
+		$this->fileBuilder = new FileBuilder;
+	}
+
+
+	public function createAndWrite(string $path, string $file, array $params = []): void
+	{
+		$file = $this->fileBuilder->create($file, $params);
+		$this->write($path, $file);
+	}
+
+
 	public function write(string $path, PhpFile|string|null $file = null): void
 	{
 		if ($file instanceof PhpFile) {

@@ -1,7 +1,7 @@
 {
 	"name": "webovac/generator",
 	"type": "library",
-	"description": "Library that helps adding features to Webovac CMS.",
+	"description": "Library that generates files of Webovac CMS apps.",
 	"keywords": ["webovac", "nette", "nextras", "cms", "library"],
 	"homepage": "https://github.com/webovac/generator",
 	"license": "MIT",
@@ -15,8 +15,9 @@
 		"issues": "https://github.com/webovac/generator/issues"
 	},
 	"require": {
-		"php": ">=8.1",
-		"webovac/core": "dev-main"
+		"php": ">=8.3",
+		"webovac/core": "dev-main",
+        "stepapo/file-builder": "dev-main"
 	},
 	"autoload": {
 		"psr-4": {

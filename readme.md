@@ -25,6 +25,16 @@ webovac.generator:
 
 ## Usage
 
+Boot generator:
+
+```php
+$rootDir = dirname(__DIR__);
+$configurator = (new Nette\Bootstrap\Configurator)
+	->setTempDirectory($rootDir . '/temp')
+	->addConfig($rootDir . '/config/generator.neon');
+$container = $configurator->createContainer();
+```
+
 ### Files
 
 Analyzes project files in App folder, compares to file configuration and creates, updates or remove files if needed.

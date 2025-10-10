@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\DI;
 
-use Nette\DI\Extensions\DecoratorExtension;
-use Nette\PhpGenerator\ClassType;
 use Nette\Schema\Expect;
 use Nette\Schema\Schema;
-use Stepapo\Model\Definition\PropertyProcessor;
 use Stepapo\Utils\DI\StepapoExtension;
-use Stepapo\Utils\Injectable;
+use Webovac\Generator\Lib\PropertyProcessor;
 use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 
 

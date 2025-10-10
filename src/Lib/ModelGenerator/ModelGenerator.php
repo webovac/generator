@@ -208,10 +208,10 @@ PHP,
 		/** @var TraitType|ClassType $trait */
 		$class = Arrays::first($file->getClasses());
 		$name = $this->setupProvider->getName(BuildModelGenerator::REPOSITORY);
+		$type = $this->setupProvider->getFqn(BuildModelGenerator::REPOSITORY);
 		$lname = lcfirst($name);
 		$comment = "@property-read $name \${$lname}";
 		$comments = explode("\n", $class->getComment() ?: '');
-		$type = $this->setupProvider->getFqn(BuildModelGenerator::REPOSITORY);
 		if ($mode === Generator::MODE_ADD) {
 			$comments[] = $comment;
 			$namespace->addUse($type);

@@ -121,15 +121,16 @@ class Writer implements Service
 			foreach ($namespace->getClasses() as $class) {
 				foreach ($class->getConstants() as $constant) {
 					$value = $constant->getValue();
-					if ($value instanceof Literal) {
-						$lines = explode("\n", (string) $value);
-						$correctedLines = [];
-						$c = count($lines);
-						foreach ($lines as $k => $line) {
-							$correctedLines[$k] = ($k === 0 || $k === $c - 1 ? "" : "\t") . trim($line);
-						}
-						$constant->setValue(new Literal(implode("\n", $correctedLines)));
+					if (!$value instanceof Literal) {
+						continue;
 					}
+					$lines = explode("\n", (string) $value);
+					$correctedLines = [];
+					$c = count($lines);
+					foreach ($lines as $k => $line) {
+						$correctedLines[$k] = ($k === 0 || $k === $c - 1 ? "" : "\t") . trim($line);
+					}
+					$constant->setValue(new Literal(implode("\n", $correctedLines)));
 				}
 			}
 		}

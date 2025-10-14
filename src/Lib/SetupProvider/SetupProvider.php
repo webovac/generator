@@ -120,7 +120,7 @@ class SetupProvider
 			ModuleGenerator::MAIN_LATTE => "$this->moduleDir/Control/$this->moduleName",
 			ModuleGenerator::MODEL_TRAIT,
 			ModuleGenerator::DATA_MODEL_TRAIT => "$this->moduleDir/Model",
-			ModuleGenerator::DI_EXTENSION => "$this->moduleDir/DI",
+			ModuleGenerator::DI_EXTENSION,
 			ModuleGenerator::CONFIG_NEON => "$this->moduleDir/DI",
 			ModuleGenerator::DEFINITION_NEON => "$this->moduleDir/config/definitions",
 			ModuleGenerator::MANIPULATION_NEON => "$this->moduleDir/config/manipulations",
@@ -140,7 +140,7 @@ class SetupProvider
 
 			ComponentGenerator::TEMPLATE,
 			ComponentGenerator::CONTROL,
-			ComponentGenerator::FACTORY => "$this->componentDir/$this->name",
+			ComponentGenerator::FACTORY,
 			ComponentGenerator::LATTE,
 			ComponentGenerator::DATASET_NEON,
 			ComponentGenerator::MENU_NEON => "$this->componentDir/$this->name",
@@ -214,51 +214,57 @@ class SetupProvider
 	}
 
 
-	public function getConfig(string $key): string
+	public function getConfigDir(string $key): ?string
 	{
 		return __DIR__ . '/../../files/'
 			. match($key) {
-				BuildGenerator::BASE_PRESENTER => 'build/basePresenter.neon',
-				BuildGenerator::BASE_PRESENTER_TEMPLATE => 'build/basePresenterTemplate.neon',
-				BuildGenerator::BASE_TEMPLATE => 'build/baseTemplate.neon',
-				BuildGenerator::TEMPLATE_FACTORY => 'build/templateFactory.neon',
-				BuildGenerator::MODEL => 'build/model.neon',
-				BuildGenerator::DATA_MODEL => 'build/dataModel.neon',
+				BuildGenerator::BASE_PRESENTER,
+				BuildGenerator::BASE_PRESENTER_TEMPLATE,
+				BuildGenerator::BASE_TEMPLATE,
+				BuildGenerator::TEMPLATE_FACTORY,
+				BuildGenerator::MODEL,
+				BuildGenerator::DATA_MODEL => 'build',
 
-				ModuleGenerator::MODULE => 'module/module.neon',
-				ModuleGenerator::PRESENTER_TRAIT => 'module/presenterTrait.neon',
-				ModuleGenerator::PRESENTER_TEMPLATE_TRAIT => 'module/presenterTemplateTrait.neon',
-				ModuleGenerator::TEMPLATE_TRAIT => 'module/templateTrait.neon',
-				ModuleGenerator::TEMPLATE_FACTORY_TRAIT => 'module/templateFactoryTrait.neon',
-				ModuleGenerator::MAIN_COMPONENT => 'module/mainComponent.neon',
-				ModuleGenerator::MAIN_FACTORY => 'module/mainFactory.neon',
-				ModuleGenerator::MAIN_TEMPLATE => 'module/mainTemplate.neon',
-				ModuleGenerator::MODEL_TRAIT => 'module/modelTrait.neon',
-				ModuleGenerator::DATA_MODEL_TRAIT => 'module/dataModelTrait.neon',
-				ModuleGenerator::DI_EXTENSION => 'module/diExtension.neon',
+				ModuleGenerator::MODULE,
+				ModuleGenerator::PRESENTER_TRAIT,
+				ModuleGenerator::PRESENTER_TEMPLATE_TRAIT,
+				ModuleGenerator::TEMPLATE_TRAIT,
+				ModuleGenerator::TEMPLATE_FACTORY_TRAIT,
+				ModuleGenerator::MAIN_COMPONENT,
+				ModuleGenerator::MAIN_FACTORY,
+				ModuleGenerator::MAIN_TEMPLATE,
+				ModuleGenerator::MODEL_TRAIT,
+				ModuleGenerator::DATA_MODEL_TRAIT,
+				ModuleGenerator::DI_EXTENSION => 'module',
 
-				BuildModelGenerator::ENTITY => 'model/entity.neon',
-				BuildModelGenerator::MAPPER => 'model/mapper.neon',
-				BuildModelGenerator::REPOSITORY => 'model/repository.neon',
-				BuildModelGenerator::DATA_OBJECT => 'model/dataObject.neon',
-				BuildModelGenerator::DATA_REPOSITORY => 'model/dataRepository.neon',
+				BuildModelGenerator::ENTITY,
+				BuildModelGenerator::MAPPER,
+				BuildModelGenerator::REPOSITORY,
+				BuildModelGenerator::DATA_OBJECT,
+				BuildModelGenerator::DATA_REPOSITORY,
 
-				ModelGenerator::ENTITY_TRAIT => 'model/entityTrait.neon',
-				ModelGenerator::MAPPER_TRAIT => 'model/mapperTrait.neon',
-				ModelGenerator::REPOSITORY_TRAIT => 'model/repositoryTrait.neon',
-				ModelGenerator::DATA_OBJECT_TRAIT => 'model/dataObjectTrait.neon',
-				ModelGenerator::DATA_REPOSITORY_TRAIT => 'model/dataRepositoryTrait.neon',
-				ModelGenerator::CONVENTIONS => 'model/conventions.neon',
+				ModelGenerator::ENTITY_TRAIT,
+				ModelGenerator::MAPPER_TRAIT,
+				ModelGenerator::REPOSITORY_TRAIT,
+				ModelGenerator::DATA_OBJECT_TRAIT,
+				ModelGenerator::DATA_REPOSITORY_TRAIT,
+				ModelGenerator::CONVENTIONS => 'model',
 
-				ComponentGenerator::TEMPLATE => 'component/template.neon',
-				ComponentGenerator::CONTROL => 'component/control.neon',
-				ComponentGenerator::FACTORY => 'component/factory.neon',
+				ComponentGenerator::TEMPLATE,
+				ComponentGenerator::CONTROL,
+				ComponentGenerator::FACTORY => 'component',
 
-				CommandGenerator::COMMAND => 'command.neon',
-				ServiceGenerator::SERVICE => 'service.neon',
+				CommandGenerator::COMMAND => 'command',
+				ServiceGenerator::SERVICE => 'service',
 
-				default => throw new InvalidArgumentException("'$key' config is not defined"),
+				default => throw new InvalidArgumentException("'$key' config dir is not defined"),
 			};
+	}
+
+
+	public function getConfig(string $key): string
+	{
+		return $this->getConfigDir($key) . "/$key.neon";
 	}
 
 

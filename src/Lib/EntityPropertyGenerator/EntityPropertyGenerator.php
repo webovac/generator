@@ -1,6 +1,6 @@
 <?php
 
-namespace Webovac\Generator\Lib\PropertyGenerator;
+namespace Webovac\Generator\Lib\EntityPropertyGenerator;
 
 use Nette\InvalidArgumentException;
 use Nette\PhpGenerator\ClassType;
@@ -22,7 +22,7 @@ use Webovac\Generator\Lib\SetupProvider\SetupProvider;
 use Webovac\Generator\Lib\Writer;
 
 
-class PropertyGenerator
+class EntityPropertyGenerator
 {
 	private string $namespace;
 	private string $path;
@@ -43,7 +43,7 @@ class PropertyGenerator
 	}
 
 
-	public function readEntityComments(): ?string
+	public function readComments(): ?string
 	{
 		if (!($content = @file_get_contents($this->path))) {
 			return null;
@@ -55,7 +55,7 @@ class PropertyGenerator
 	}
 
 
-	public function createEntityProperties(): void
+	public function createSimple(): void
 	{
 		if (!($content = @file_get_contents($this->path))) {
 			throw new InvalidArgumentException("File '$this->path' does not exist.");
@@ -75,7 +75,7 @@ class PropertyGenerator
 			$foreign = $this->table->foreignKeys[$column->name] ?? null;
 			$c = [];
 			$c['property'] = '@property';
-			$c['type'] = $column->getPhpType($foreign);
+			$c['type'] = $column->getNextrasType($foreign);
 			if ($column->type === 'datetime') {
 				$namespace->addUse(DateTimeImmutable::class);
 			}
@@ -110,7 +110,7 @@ class PropertyGenerator
 	}
 
 
-	public function createEntityPropertyManyHasMany(Foreign $from, Foreign $to, bool $isMain = false): void
+	public function createManyHasMany(Foreign $from, Foreign $to, bool $isMain = false): void
 	{
 		$file = PhpFile::fromCode(@file_get_contents($this->path));
 		/** @var PhpNamespace $namespace */
@@ -137,7 +137,7 @@ class PropertyGenerator
 	}
 
 
-	public function createEntityPropertyOneHasMany(Foreign $foreign): void
+	public function createOneHasMany(Foreign $foreign): void
 	{
 		$file = PhpFile::fromCode(@file_get_contents($this->path));
 		/** @var PhpNamespace $namespace */
@@ -164,7 +164,7 @@ class PropertyGenerator
 	}
 
 
-	public function sortEntityProperties(): void
+	public function sort(): void
 	{
 		$file = PhpFile::fromCode(@file_get_contents($this->path));
 		/** @var ClassType $class */

@@ -12,6 +12,8 @@ use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 
 class CommandGenerator extends BaseGenerator
 {
+	public const string CONFIG_DIR = 'command';
+
 	public const string COMMAND = 'command';
 
 

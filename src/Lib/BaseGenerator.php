@@ -17,7 +17,7 @@ abstract class BaseGenerator implements Injectable
 	abstract public function remove(): void;
 
 
-	protected function write(string $key, array $params = []) : void
+	protected function write(string $key, array $params = []): void
 	{
 		$this->writer->createAndWrite(
 			path: $this->setupProvider->getPath($key),

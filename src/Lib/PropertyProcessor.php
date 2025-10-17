@@ -55,6 +55,7 @@ class PropertyProcessor
 						continue;
 					}
 					$this->generator->updateEntitySimple($table);
+					$this->generator->updateDataSimple($table);
 				}
 			}
 			# GENERATING 1:M PROPERTIES
@@ -66,6 +67,7 @@ class PropertyProcessor
 					foreach ($table->foreignKeys as $foreignKey) {
 						if ($foreignKey->reverseName) {
 							$this->generator->updateEntityOneHasMany($table, $foreignKey);
+							$this->generator->updateDataOneHasMany($table, $foreignKey);
 						}
 					}
 				}
@@ -77,8 +79,10 @@ class PropertyProcessor
 						$from = Arrays::first($table->foreignKeys);
 						$to = Arrays::last($table->foreignKeys);
 						$this->generator->updateEntityManyHasMany($table, $from, $to, isMain: true);
+						$this->generator->updateDataManyHasMany($table, $from, $to, isMain: true);
 						if ($to->reverseName) {
 							$this->generator->updateEntityManyHasMany($table, $to, $from);
+							$this->generator->updateDataManyHasMany($table, $to, $from);
 						}
 					}
 				}
@@ -89,7 +93,8 @@ class PropertyProcessor
 					if (count($table->columns) === 2 && $table->primaryKey && count($table->primaryKey->columns) === 2) {
 						continue;
 					}
-					$this->generator->updateEntitySortComments($table);
+					$this->generator->updateEntitySortProperties($table);
+					$this->generator->updateDataSortProperties($table);
 				}
 			}
 			# GETTING UPDATED COMMENTS

@@ -15,9 +15,10 @@ use Webovac\Generator\Lib\BuildGenerator\IBuildGenerator;
 use Webovac\Generator\Lib\BuildModelGenerator\IBuildModelGenerator;
 use Webovac\Generator\Lib\CommandGenerator\ICommandGenerator;
 use Webovac\Generator\Lib\ComponentGenerator\IComponentGenerator;
+use Webovac\Generator\Lib\DataPropertyGenerator\IDataPropertyGenerator;
+use Webovac\Generator\Lib\EntityPropertyGenerator\IEntityPropertyGenerator;
 use Webovac\Generator\Lib\ModelGenerator\IModelGenerator;
 use Webovac\Generator\Lib\ModuleGenerator\IModuleGenerator;
-use Webovac\Generator\Lib\PropertyGenerator\IPropertyGenerator;
 use Webovac\Generator\Lib\ServiceGenerator\IServiceGenerator;
 
 
@@ -35,7 +36,8 @@ class Generator implements \Stepapo\Utils\Service
 		private ICommandGenerator $commandGenerator,
 		private IBuildGenerator $buildGenerator,
 		private IBuildModelGenerator $buildModelGenerator,
-		private IPropertyGenerator $propertyGenerator,
+		private IEntityPropertyGenerator $entityPropertyGenerator,
+		private IDataPropertyGenerator $dataPropertyGenerator,
 	) {}
 
 
@@ -143,30 +145,54 @@ class Generator implements \Stepapo\Utils\Service
 
 	public function getEntityComments(Table $table): ?string
 	{
-		return $this->propertyGenerator->create($table->getPhpName(), $table)->readEntityComments();
+		return $this->entityPropertyGenerator->create($table->getPhpName(), $table)->readComments();
 	}
 
 
 	public function updateEntitySimple(Table $table): void
 	{
-		$this->propertyGenerator->create($table->getPhpName(), $table)->createEntityProperties();
+		$this->entityPropertyGenerator->create($table->getPhpName(), $table)->createSimple();
 	}
 
 
 	public function updateEntityManyHasMany(Table $table, Foreign $from, Foreign $to, bool $isMain = false)
 	{
-		$this->propertyGenerator->create($from->getPhpTable(), $table)->createEntityPropertyManyHasMany($from, $to, $isMain);
+		$this->entityPropertyGenerator->create($from->getPhpTable(), $table)->createManyHasMany($from, $to, $isMain);
 	}
 
 
 	public function updateEntityOneHasMany(Table $table, Foreign $foreign)
 	{
-		$this->propertyGenerator->create($foreign->getPhpTable(), $table)->createEntityPropertyOneHasMany($foreign);
+		$this->entityPropertyGenerator->create($foreign->getPhpTable(), $table)->createOneHasMany($foreign);
 	}
 
 
-	public function updateEntitySortComments(Table $table)
+	public function updateEntitySortProperties(Table $table)
 	{
-		$this->propertyGenerator->create($table->getPhpName(), $table)->sortEntityProperties();
+		$this->entityPropertyGenerator->create($table->getPhpName(), $table)->sort();
+	}
+
+
+	public function updateDataSimple(Table $table): void
+	{
+		$this->dataPropertyGenerator->create($table->getPhpName(), $table)->createSimple();
+	}
+
+
+	public function updateDataManyHasMany(Table $table, Foreign $from, Foreign $to, bool $isMain = false)
+	{
+		$this->dataPropertyGenerator->create($from->getPhpTable(), $table)->createManyHasMany($from, $to, $isMain);
+	}
+
+
+	public function updateDataOneHasMany(Table $table, Foreign $foreign)
+	{
+		$this->dataPropertyGenerator->create($foreign->getPhpTable(), $table)->createOneHasMany($foreign);
+	}
+
+
+	public function updateDataSortProperties(Table $table)
+	{
+		$this->dataPropertyGenerator->create($table->getPhpName(), $table)->sort();
 	}
 }

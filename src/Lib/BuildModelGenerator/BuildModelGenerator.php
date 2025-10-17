@@ -13,6 +13,8 @@ use Webovac\Generator\Lib\Writer;
 
 class BuildModelGenerator extends BaseGenerator
 {
+	public const string CONFIG_DIR = 'buildModel';
+
 	public const string ENTITY = 'entity';
 	public const string MAPPER = 'mapper';
 	public const string REPOSITORY = 'repository';
@@ -56,7 +58,8 @@ class BuildModelGenerator extends BaseGenerator
 		$this->write(self::ENTITY, [
 			'comments' => [
 				"@property int \$id {primary}",
-				"@method {$this->setupProvider->getName(self::DATA_OBJECT)} getData(bool \$neon = false, bool \$forCache = false, ?array \$select = null)",
+				"",
+				"@method {$this->setupProvider->getName(self::DATA_OBJECT)} getData(bool \$forCache = false)",
 			],
 			'data' => $this->setupProvider->getFqn(self::DATA_OBJECT),
 			'getDataClassMethod.body' => /* language=PHP */ "return {$this->setupProvider->getName(self::DATA_OBJECT)}::class;",

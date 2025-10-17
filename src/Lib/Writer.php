@@ -135,4 +135,10 @@ class Writer implements Service
 			}
 		}
 	}
+
+
+	private function fixProperties(PhpFile $file): void
+	{
+
+	}
 }

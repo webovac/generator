@@ -20,6 +20,8 @@ use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 
 class ComponentGenerator extends BaseGenerator
 {
+	public const string CONFIG_DIR = 'component';
+
 	public const string TEMPLATE = 'template';
 	public const string CONTROL = 'control';
 	public const string FACTORY = 'factory';

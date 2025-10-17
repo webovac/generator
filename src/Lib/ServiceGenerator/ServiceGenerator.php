@@ -12,6 +12,8 @@ use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 
 class ServiceGenerator extends BaseGenerator
 {
+	public const string CONFIG_DIR = 'service';
+
 	public const string SERVICE = 'service';
 
 

@@ -26,6 +26,8 @@ use Webovac\Generator\Lib\Writer;
 
 class ModelGenerator extends BaseGenerator
 {
+	public const string CONFIG_DIR = 'model';
+
 	public const string ENTITY_TRAIT = 'entityTrait';
 	public const string MAPPER_TRAIT = 'mapperTrait';
 	public const string REPOSITORY_TRAIT = 'repositoryTrait';

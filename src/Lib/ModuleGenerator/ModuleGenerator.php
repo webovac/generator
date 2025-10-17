@@ -12,6 +12,8 @@ use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 
 class ModuleGenerator extends BaseGenerator
 {
+	public const string CONFIG_DIR = 'module';
+
 	public const string MODULE = 'module';
 	public const string PRESENTER_TRAIT = 'presenterTrait';
 	public const string PRESENTER_TEMPLATE_TRAIT = 'presenterTemplateTrait';

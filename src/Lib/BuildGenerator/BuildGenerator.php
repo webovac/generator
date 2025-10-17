@@ -11,6 +11,8 @@ use Webovac\Generator\Lib\SetupProvider\SetupProvider;
 
 class BuildGenerator extends BaseGenerator
 {
+	public const string CONFIG_DIR = 'build';
+
 	public const string BASE_PRESENTER = 'basePresenter';
 	public const string BASE_PRESENTER_TEMPLATE = 'basePresenterTemplate';
 	public const string BASE_TEMPLATE = 'baseTemplate';

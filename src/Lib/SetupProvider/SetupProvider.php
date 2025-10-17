@@ -87,15 +87,27 @@ class SetupProvider
 	}
 
 
-	public function getBuildDir(): string
+	public function getAppNamespace(): string
 	{
-		return $this->buildDir;
+		return $this->appNamespace;
+	}
+
+
+	public function getAppDir(): string
+	{
+		return $this->appDir;
 	}
 
 
 	public function getBuildNamespace(): string
 	{
 		return $this->buildNamespace;
+	}
+
+
+	public function getBuildDir(): string
+	{
+		return $this->buildDir;
 	}
 
 

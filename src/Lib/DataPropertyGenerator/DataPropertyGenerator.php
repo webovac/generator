@@ -137,6 +137,14 @@ class DataPropertyGenerator
 		$property->setType('array');
 		$property->setNullable();
 		$property->addComment('@var int[]');
+		if ($from->reverseSkipInManipulation) {
+			$property->addAttribute(SkipInManipulation::class);
+			$namespace->addUse(SkipInManipulation::class);
+		}
+		if ($from->reverseDontCache) {
+			$property->addAttribute(DontCache::class);
+			$namespace->addUse(DontCache::class);
+		}
 		$class->addMember($property);
 		$this->writer->write($this->path, $file);
 	}

@@ -71,7 +71,7 @@ class DataPropertyGenerator
 				$property->setNullable();
 			}
 			if ($foreign) {
-				if ($type === 'File') {
+				if ($type === 'File' && $foreign->schema === null) {
 					$property->addAttribute(Type::class, [new Literal('FileData::class')]);
 					$type = "$this->namespace\\$type\\{$type}Data";
 					$namespace->addUse($type);

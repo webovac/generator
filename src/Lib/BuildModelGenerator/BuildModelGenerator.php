@@ -35,8 +35,8 @@ class BuildModelGenerator extends BaseGenerator
 			entity: $this->entity,
 		);
 	}
-	
-	
+
+
 	public function generate(): void
 	{
 		$this->createEntity();
@@ -59,7 +59,7 @@ class BuildModelGenerator extends BaseGenerator
 			'comments' => [
 				"@property int \$id {primary}",
 				"",
-				"@method {$this->setupProvider->getName(self::DATA_OBJECT)} getData(bool \$forCache = false)",
+				"@method {$this->setupProvider->getName(self::DATA_OBJECT)} getData(bool \$neon = false, bool \$forCache = false)",
 			],
 			'data' => $this->setupProvider->getFqn(self::DATA_OBJECT),
 			'getDataClassMethod.body' => /* language=PHP */ "return {$this->setupProvider->getName(self::DATA_OBJECT)}::class;",

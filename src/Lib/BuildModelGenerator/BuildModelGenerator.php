@@ -11,6 +11,7 @@ use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\TraitType;
 use Nette\Utils\Arrays;
+use Nextras\Dbal\Platforms\Data\Fqn;
 use Nextras\Orm\StorageReflection\StringHelper;
 use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Module;
@@ -94,7 +95,8 @@ class BuildModelGenerator extends BaseGenerator
 		$lname = $this->entity->table ?: lcfirst(StringHelper::underscore($this->name));
 		$this->write(self::MAPPER, [
 			'hideConventions' => !$this->entity->withConventions,
-			'getTableName.body' => /* language=PHP */ "return new Fqn('$schema', '$lname');",
+			'getTableName.returnType' => $schema === $this->setupProvider->getDefaultSchema() ? 'string' : Fqn::class,
+			'getTableName.body' => /* language=PHP */ $schema === $this->setupProvider->getDefaultSchema() ? "return '$lname';" : "return new Fqn('$schema', '$lname');",
 			'getDataClassMethod.body' => <<<PHP
 return new {$this->setupProvider->getName(ModelGenerator::CONVENTIONS)}(
 	\$this->createInflector(),

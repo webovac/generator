@@ -7,7 +7,7 @@ uses:
 methods:
 	getTableName:
 		visibility: public
-		returnType: Nextras\Dbal\Platforms\Data\Fqn
+		returnType: %getTableName.returnType%
 		body: %getTableName.body%
 	createConventions:
 		visibility: protected

@@ -2,3 +2,11 @@ name: %name%
 namespace: %namespace%
 extends: %extends%
 type: %type%
+comments: %comments%
+uses:
+	%data%: [hide: %isTrait%]
+methods:
+	getDataClass:
+		returnType: string
+		body: %getDataClassMethod.body%
+		hide: %isTrait%

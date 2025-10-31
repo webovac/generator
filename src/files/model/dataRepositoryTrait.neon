@@ -2,3 +2,7 @@ name: %name%
 namespace: %namespace%
 extends: %extends%
 type: %type%
+comments: %comments%
+uses:
+	Stepapo\Model\Data\Collection: [hide: %isTrait%]
+	%data%: [hide: %isTrait%]

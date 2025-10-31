@@ -2,8 +2,13 @@ name: %name%
 namespace: %namespace%
 extends: Webovac\Core\Model\CmsMapper
 uses:
-	Nextras\Orm\Mapper\Dbal\Conventions\IConventions:
+	Nextras\Dbal\Platforms\Data\Fqn:
+	Nextras\Orm\Mapper\Dbal\Conventions\IConventions: [hide: %hideConventions%]
 methods:
+	getTableName:
+		visibility: public
+		returnType: Nextras\Dbal\Platforms\Data\Fqn
+		body: %getTableName.body%
 	createConventions:
 		visibility: protected
 		returnType: Nextras\Orm\Mapper\Dbal\Conventions\IConventions

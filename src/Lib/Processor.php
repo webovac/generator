@@ -82,11 +82,8 @@ class Processor implements \Stepapo\Utils\Service
 		foreach ($app->modules as $module) {
 			$this->generator->updateBuild($module);
 			foreach ($module->entities as $entity) {
-				if (!$entity->withTraits) {
-					continue;
-				}
 				if (!array_key_exists($entity->name, $entities)) {
-					$this->generator->createBuildModel($entity);
+					$this->generator->createBuildModel($entity, $module);
 					$entities[$entity->name] = $entity->name;
 				}
 				$this->generator->updateBuildModel($entity, $module);
@@ -97,7 +94,7 @@ class Processor implements \Stepapo\Utils\Service
 		$entities = [];
 		foreach ($app->modules as $module) {
 			foreach ($module->entities as $entity) {
-				if (!$entity->withTraits || array_key_exists($entity->name, $entities)) {
+				if (array_key_exists($entity->name, $entities)) {
 					continue;
 				}
 				$this->generator->checkBuildModel($entity, $module);

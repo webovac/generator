@@ -53,6 +53,7 @@ class SetupProvider
 		private string $appDir,
 		private string $buildNamespace,
 		private string $buildDir,
+		private string $defaultSchema,
 	) {
 		$this->lname = $this->name ? lcfirst($this->name) : null;
 		$this->moduleName = $this->module?->name ?: null;
@@ -108,6 +109,12 @@ class SetupProvider
 	public function getBuildDir(): string
 	{
 		return $this->buildDir;
+	}
+
+
+	public function getDefaultSchema(): string
+	{
+		return $this->defaultSchema;
 	}
 
 

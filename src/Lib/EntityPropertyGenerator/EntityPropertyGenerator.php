@@ -90,11 +90,7 @@ class EntityPropertyGenerator
 			if ($foreign) {
 				$c['foreign'] = "{m:1 {$foreign->getPhpTable()}" . ($foreign->reverseName ? "::\$$foreign->reverseName" : ", oneSided=true") . "}";
 				if ($this->table->name !== $foreign->table) {
-					if ($foreign->schema) {
-						$use = "{$this->setupProvider->getAppNamespace()}\Module\\{$foreign->getPhpSchema()}\Model\\{$foreign->getPhpTable()}\\{$foreign->getPhpTable()}";
-					} else {
-						$use = "$this->namespace\\{$foreign->getPhpTable()}\\{$foreign->getPhpTable()}";
-					}
+					$use = "$this->namespace\\{$foreign->getPhpTable()}\\{$foreign->getPhpTable()}";
 					$namespace->addUse($use);
 				}
 			}
@@ -128,11 +124,7 @@ class EntityPropertyGenerator
 		$c['name'] = "\$" . ($from->reverseName ? "$from->reverseName" : (StringHelper::camelize($to->table) . "s"));
 		$c['foreign'] = "{m:m {$to->getPhpTable()}" . ($to->reverseName ? "::\$$to->reverseName" : "") . ($to->reverseOrder ? ", orderBy=$to->reverseOrder" : "") . ($isMain ? ", isMain=true" : "") . ($to->reverseName ? "" : ", oneSided=true") ."}";
 		if ($from->table !== $to->table) {
-			if ($to->schema) {
-				$use = "{$this->setupProvider->getAppNamespace()}\Module\\{$to->getPhpSchema()}\Model\\{$to->getPhpTable()}\\{$to->getPhpTable()}";
-			} else {
-				$use = "$this->namespace\\{$to->getPhpTable()}\\{$to->getPhpTable()}";
-			}
+			$use = "$this->namespace\\{$to->getPhpTable()}\\{$to->getPhpTable()}";
 			$namespace->addUse($use);
 		}
 		$comment = implode(' ', $c);
@@ -159,11 +151,11 @@ class EntityPropertyGenerator
 		$c['name'] = "\$" . ($foreign->reverseName ? "$foreign->reverseName" : (StringHelper::camelize($this->table->name) . "s"));
 		$c['foreign'] = "{1:m {$this->table->getPhpName()}::$" . StringHelper::camelize(str_replace('_id', '', $foreign->keyColumn)) . ($foreign->reverseOrder ? ", orderBy=$foreign->reverseOrder" : "") . "}";
 		if ($this->table->name !== $foreign->table) {
-			if ($this->table->module) {
-				$use = "{$this->setupProvider->getAppNamespace()}\Module\\{$this->table->module}\Model\\{$this->table->getPhpTable()}\\{$this->table->getPhpTable()}";
-			} else {
+//			if ($this->table->module) {
+//				$use = "{$this->setupProvider->getAppNamespace()}\Module\\{$this->table->module}\Model\\{$this->table->getPhpTable()}\\{$this->table->getPhpTable()}";
+//			} else {
 				$use = "$this->namespace\\{$this->table->getPhpName()}\\{$this->table->getPhpName()}";
-			}
+//			}
 			$namespace->addUse($use);
 		}
 		$comment = implode(' ', $c);

@@ -2,3 +2,16 @@ name: %name%
 namespace: %namespace%
 extends: %extends%
 type: %type%
+comments: %comments%
+uses:
+	%person%: [hide: %hidePerson%]
+	%data%: [hide: %isTrait%]
+	Nextras\Orm\Collection\ICollection: [hide: %isTrait%]
+	Webovac\Core\Model\CmsEntity: [hide: %isTrait%]
+	DateTimeInterface: [hide: %isTrait%]
+methods:
+	getEntityClassNames:
+		static: true
+		returnType: array
+		body: %getEntityClassNamesMethod.body%
+		hide: %isTrait%

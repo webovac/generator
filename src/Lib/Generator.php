@@ -65,9 +65,9 @@ class Generator implements \Stepapo\Utils\Service
 	}
 
 
-	public function createBuildModel(Entity $entity): void
+	public function createBuildModel(Entity $entity, Module $module): void
 	{
-		$this->buildModelGenerator->create($entity)->generate();
+		$this->buildModelGenerator->create($entity, $module)->generate();
 	}
 
 

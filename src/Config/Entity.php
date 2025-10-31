@@ -12,8 +12,11 @@ use Stepapo\Utils\Config;
 class Entity extends Config
 {
 	#[KeyProperty] public string $name;
+	public ?string $schema = null;
+	public ?string $table = null;
 	public bool $withTraits = true;
 	public bool $withConventions = false;
+	public bool $withDataRepository = false;
 	#[ArrayOfType(Implement::class)] public array $entityImplements = [];
 	#[ArrayOfType(Implement::class)] public array $repositoryImplements = [];
 }

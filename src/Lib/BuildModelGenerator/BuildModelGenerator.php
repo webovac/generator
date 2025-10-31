@@ -4,8 +4,19 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\Lib\BuildModelGenerator;
 
+use Nette\DI\Attributes\Inject;
+use Nette\PhpGenerator\Attribute;
+use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\PhpFile;
+use Nette\PhpGenerator\PhpNamespace;
+use Nette\PhpGenerator\TraitType;
+use Nette\Utils\Arrays;
+use Nextras\Orm\StorageReflection\StringHelper;
 use Webovac\Generator\Config\Entity;
+use Webovac\Generator\Config\Module;
 use Webovac\Generator\Lib\BaseGenerator;
+use Webovac\Generator\Lib\BuildGenerator\BuildGenerator;
+use Webovac\Generator\Lib\Generator;
 use Webovac\Generator\Lib\ModelGenerator\ModelGenerator;
 use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 use Webovac\Generator\Lib\Writer;
@@ -26,6 +37,7 @@ class BuildModelGenerator extends BaseGenerator
 
 	public function __construct(
 		private Entity $entity,
+		private ?Module $module,
 		ISetupProvider $setupProviderFactory,
 	) {
 		$this->name = $this->entity->name;
@@ -33,17 +45,26 @@ class BuildModelGenerator extends BaseGenerator
 		$this->setupProvider = $setupProviderFactory->create(
 			name: $this->entity->name,
 			entity: $this->entity,
+			module: $this->module,
 		);
 	}
 
 
 	public function generate(): void
 	{
-		$this->createEntity();
-		$this->createMapper();
-		$this->createRepository();
-		$this->createDataObject();
-		$this->createDataRepository();
+		if ($this->entity->withTraits) {
+			$this->createEntity();
+			$this->createMapper();
+			$this->createRepository();
+			$this->createDataObject();
+			if ($this->entity->withDataRepository) {
+				$this->createDataRepository();
+			}
+		}
+		if ($this->entity->withDataRepository) {
+			$this->updateDataModel();
+		}
+		$this->updateModel();
 	}
 
 
@@ -69,8 +90,11 @@ class BuildModelGenerator extends BaseGenerator
 
 	private function createMapper(): void
 	{
+		$schema = $this->entity->schema ?: $this->setupProvider->getDefaultSchema();
+		$lname = $this->entity->table ?: lcfirst(StringHelper::underscore($this->name));
 		$this->write(self::MAPPER, [
 			'hideConventions' => !$this->entity->withConventions,
+			'getTableName.body' => /* language=PHP */ "return new Fqn('$schema', '$lname');",
 			'getDataClassMethod.body' => <<<PHP
 return new {$this->setupProvider->getName(ModelGenerator::CONVENTIONS)}(
 	\$this->createInflector(),
@@ -117,5 +141,58 @@ PHP,
 			],
 			'data' => $this->setupProvider->getFqn(self::DATA_OBJECT),
 		]);
+	}
+
+
+	private function updateDataModel(): void
+	{
+		$path = $this->setupProvider->getPath(BuildGenerator::DATA_MODEL);
+		$file = PhpFile::fromCode(file_get_contents($path));
+
+		/** @var PhpNamespace $namespace */
+		$namespace = (Arrays::first($file->getNamespaces()));
+
+		/** @var TraitType|ClassType $class */
+		$class = Arrays::first($file->getClasses());
+		$name = $this->setupProvider->getName(BuildModelGenerator::DATA_REPOSITORY);
+		$propertyName = lcfirst($name);
+		$type = $this->setupProvider->getFqn(BuildModelGenerator::DATA_REPOSITORY);
+		$property = $class->hasProperty($propertyName)
+			? $class->getProperty($propertyName)
+			: $class->addProperty($propertyName);
+		$property
+			->setPublic()
+			->setType($type)
+			->setAttributes([new Attribute(Inject::class, [])]);
+		$namespace
+			->addUse($type)
+			->addUse(Inject::class);
+
+		$this->writer->write($path, $file);
+	}
+
+
+
+	private function updateModel(): void
+	{
+		$path = $this->setupProvider->getPath(BuildGenerator::MODEL);
+		$file = PhpFile::fromCode(file_get_contents($path));
+
+		/** @var PhpNamespace $namespace */
+		$namespace = Arrays::first($file->getNamespaces());
+
+		/** @var TraitType|ClassType $trait */
+		$class = Arrays::first($file->getClasses());
+		$name = $this->setupProvider->getName(BuildModelGenerator::REPOSITORY);
+		$type = $this->setupProvider->getFqn($this->entity->withTraits ? BuildModelGenerator::REPOSITORY : ModelGenerator::REPOSITORY_TRAIT);
+		$lname = lcfirst($name);
+		$comment = "@property-read $name \${$lname}";
+		$comments = explode("\n", $class->getComment() ?: '');
+		$comments[] = $comment;
+		$namespace->addUse($type);
+		sort($comments);
+		$class->setComment(implode("\n", $comments));
+
+		$this->writer->write($path, $file);
 	}
 }

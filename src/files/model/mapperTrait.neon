@@ -2,3 +2,17 @@ name: %name%
 namespace: %namespace%
 extends: %extends%
 type: %type%
+uses:
+	Nextras\Dbal\Platforms\Data\Fqn: [hide: %isTrait%]
+	Nextras\Orm\Mapper\Dbal\Conventions\IConventions: [hide: %hideConventions%]
+methods:
+	getTableName:
+		visibility: public
+		returnType: Nextras\Dbal\Platforms\Data\Fqn
+		body: %getTableName.body%
+		hide: %isTrait%
+	createConventions:
+		visibility: protected
+		returnType: Nextras\Orm\Mapper\Dbal\Conventions\IConventions
+		body: %createConventionsMethod.body%
+		hide: %hideConventions%

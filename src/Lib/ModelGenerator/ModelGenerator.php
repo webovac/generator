@@ -14,6 +14,7 @@ use Nette\Utils\Arrays;
 use Nextras\Orm\StorageReflection\StringHelper;
 use Stepapo\Model\Data\DataRepository;
 use Stepapo\Model\Data\Item;
+use Webovac\Core\Model\CmsEntity;
 use Webovac\Core\Model\CmsMapper;
 use Webovac\Core\Model\CmsRepository;
 use Webovac\Generator\Config\Entity;
@@ -142,7 +143,7 @@ PHP,
 	private function createEntityTrait(): void
 	{
 		$this->write(self::ENTITY_TRAIT, [
-			'extends' => $this->entity->withTraits ? null : CmsMapper::class,
+			'extends' => $this->entity->withTraits ? null : CmsEntity::class,
 			'type' => $this->entity->withTraits ? TraitType::class : ClassType::class,
 			'isTrait' => $this->entity->withTraits,
 			'comments' => $this->entity->withTraits ? [] : [

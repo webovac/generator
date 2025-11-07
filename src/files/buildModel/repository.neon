@@ -6,7 +6,6 @@ uses:
 	%person%: [hide: %hidePerson%]
 	%data%:
 	Nextras\Orm\Collection\ICollection:
-	Webovac\Core\Model\CmsEntity:
 	DateTimeInterface:
 methods:
 	getEntityClassNames:

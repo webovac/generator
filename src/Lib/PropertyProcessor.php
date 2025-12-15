@@ -67,7 +67,9 @@ class PropertyProcessor
 					foreach ($table->foreignKeys as $foreignKey) {
 						if ($foreignKey->reverseName) {
 							$this->generator->updateEntityOneHasMany($table, $foreignKey);
-							$this->generator->updateDataOneHasMany($table, $foreignKey);
+							if ($foreignKey->reverseData) {
+								$this->generator->updateDataOneHasMany($table, $foreignKey);
+							}
 						}
 					}
 				}
@@ -79,10 +81,14 @@ class PropertyProcessor
 						$from = Arrays::first($table->foreignKeys);
 						$to = Arrays::last($table->foreignKeys);
 						$this->generator->updateEntityManyHasMany($table, $from, $to, isMain: true);
-						$this->generator->updateDataManyHasMany($table, $from, $to, isMain: true);
+						if ($from->reverseData) {
+							$this->generator->updateDataManyHasMany($table, $from, $to, isMain: true);
+						}
 						if ($to->reverseName) {
 							$this->generator->updateEntityManyHasMany($table, $to, $from);
-							$this->generator->updateDataManyHasMany($table, $to, $from);
+							if ($to->reverseData) {
+								$this->generator->updateDataManyHasMany($table, $to, $from);
+							}
 						}
 					}
 				}

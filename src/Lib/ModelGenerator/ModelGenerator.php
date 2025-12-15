@@ -105,6 +105,8 @@ class ModelGenerator extends BaseGenerator
 		$repositoryKey = $this->module && !$this->entity->withTraits ? self::REPOSITORY_TRAIT : BuildModelGenerator::REPOSITORY;
 		$this->writer->checkFileImplements($this->setupProvider->getPath($entityKey), $this->entity->entityImplements);
 		$this->writer->checkFileImplements($this->setupProvider->getPath($repositoryKey), $this->entity->repositoryImplements);
+		$this->writer->checkFileOverrides($this->setupProvider->getPath($entityKey), $this->setupProvider->getName(self::ENTITY_TRAIT), $this->entity->entityOverrides);
+		$this->writer->checkFileOverrides($this->setupProvider->getPath($repositoryKey), $this->setupProvider->getName(self::REPOSITORY_TRAIT), $this->entity->repositoryOverrides);
 		if ($this->entity->withTraits) {
 			$paths = [
 				$this->setupProvider->getPath(BuildModelGenerator::ENTITY),

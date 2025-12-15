@@ -29,14 +29,10 @@ webovac.generator:
 
 ## Usage
 
-Boot generator:
+Goes through all generator definitions and generates corresponding classes and traits in Build and App namespaces.
 
-```php
-$rootDir = dirname(__DIR__);
-$configurator = (new Nette\Bootstrap\Configurator)
-	->setTempDirectory($rootDir . '/temp')
-	->addConfig($rootDir . '/config/generator.neon');
-$container = $configurator->createContainer();
+```bash
+php bin/generate.php
 ```
 
 ### Files
@@ -56,13 +52,6 @@ modules:
             PersonMailer:
 ```
 
-- `bin/generate.php`
-
-```php
-$folders = [__DIR__ . '/../config/files'];
-$container->getByType(Webovac\Generator\Lib\Processor::class)->process($folders);
-```
-
 ### Entity Properties
 
 Analyzes Nextras ORM entities, compares to Definition configs and updates entity properties if needed.
@@ -74,27 +63,14 @@ See [Stepapo Model](https://github.com/stepapo/model#definitions)
 - `Build\Model\Person\Person.php`
 
 ```php
-namespace Build\Model\Person;
-
-class Person extends Stepapo\Model\Orm\StepapoEntity
+class Person extends CmsEntity
 {
 }
 ```
 
-- `bin/processEntities.php`
+Results in updated entity file
 
 ```php
-$folders = [__DIR__ . '/../config/definitions'];
-$container->getByType(Webovac\Generator\Lib\PropertyProcessor::class)
-    ->setCommentsBefore($folders)
-    ->process($folders);
-```
-
-- results in updated entity file
-
-```php
-namespace Build\Model\Person;
-
 /**
  * @property int $id {primary}
  *
@@ -105,7 +81,7 @@ namespace Build\Model\Person;
  * @property DateTimeImmutable $createdAt {default now}
  * @property DateTimeImmutable|null $updatedAt
  */
-class Person extends Stepapo\Model\Orm\StepapoEntity
+class Person extends CmsEntity
 {
 }
 ```

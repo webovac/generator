@@ -19,4 +19,6 @@ class Entity extends Config
 	public bool $withDataRepository = false;
 	#[ArrayOfType(Implement::class)] public array $entityImplements = [];
 	#[ArrayOfType(Implement::class)] public array $repositoryImplements = [];
+	#[ArrayOfType(Override::class)] public array $entityOverrides = [];
+	#[ArrayOfType(Override::class)] public array $repositoryOverrides = [];
 }

@@ -12,7 +12,10 @@ use Nette\Utils\Arrays;
 use Nette\Utils\FileSystem;
 use Stepapo\FileBuilder\FileBuilder;
 use Stepapo\Utils\Service;
+use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Implement;
+use Webovac\Generator\Config\Module;
+use Webovac\Generator\Config\Override;
 
 
 class Writer implements Service
@@ -111,6 +114,26 @@ class Writer implements Service
 		$sortedImplements = $class->getImplements();
 		sort($sortedImplements);
 		$class->setImplements($sortedImplements);
+		$this->write($path, $file);
+	}
+
+
+	/** @param Override[] $overrides */
+	public function checkFileOverrides(string $path, string $traitName, array $overrides = []): void
+	{
+		if (!($content = @file_get_contents($path))) {
+			throw new InvalidArgumentException("File '$path' does not exist.");
+		}
+		$file = PhpFile::fromCode($content);
+		$class = Arrays::first($file->getClasses());
+		$traits = $class->getTraits();
+		foreach ($overrides as $override) {
+			$trait = $traits[$override->trait];
+			$rc = new \ReflectionClass($override->trait);
+			$shortName = $rc->getShortName();
+			$alias = lcfirst($rc->getShortName()) . ucfirst($override->method);
+			$trait->addResolution("$traitName::$override->method insteadof $shortName");
+		}
 		$this->write($path, $file);
 	}
 

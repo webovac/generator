@@ -68,31 +68,29 @@ class DataPropertyGenerator
 			$name = $column->getPhpName($foreign);
 			$property = new Property($name);
 			$type = $column->getPhpType($foreign);
+			$t = $type;
 			if ($this->table->getPhpName() === 'File') {
 				$property->setNullable();
 			}
 			if ($foreign) {
-				if ($type === 'File' && $foreign->schema === null) {
-					$property->addAttribute(Type::class, [new Literal('FileData::class')]);
-					$type = "$this->namespace\\$type\\{$type}Data";
-					$namespace->addUse($type);
+				if (($type === 'File' && $foreign->schema === null) || $column->showData) {
+					$property->addAttribute(Type::class, [new Literal("{$type}Data::class")]);
+					$t = "$this->namespace\\$type\\{$type}Data";
+					$namespace->addUse($t);
 					$namespace->addUse(Type::class);
-				} else {
-					if ($column->showData) {
-						$type = "$this->namespace\\$type\\{$type}Data";
-						$namespace->addUse($type);
-						$type .= '|int|string';
-					} else {
-						$type = 'int|string';
+					if ($type !== 'File') {
+						$t .= '|int|string';
 					}
+				} else {
+					$t = 'int|string';
 				}
 				$property->setNullable();
 			}
 			if ($column->type === 'datetime') {
-				$type = DateTimeInterface::class;
-				$namespace->addUse($type);
+				$t = DateTimeInterface::class;
+				$namespace->addUse($t);
 			}
-			$property->setType($type);
+			$property->setType($t);
 			if ($column->null || $name === 'createdAt') {
 				$property->setNullable();
 			}

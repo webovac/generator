@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\Lib\ComponentGenerator;
 
-use JetBrains\PhpStorm\Language;
 use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;

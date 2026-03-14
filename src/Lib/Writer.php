@@ -12,9 +12,7 @@ use Nette\Utils\Arrays;
 use Nette\Utils\FileSystem;
 use Stepapo\FileBuilder\FileBuilder;
 use Stepapo\Utils\Service;
-use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Implement;
-use Webovac\Generator\Config\Module;
 use Webovac\Generator\Config\Override;
 
 

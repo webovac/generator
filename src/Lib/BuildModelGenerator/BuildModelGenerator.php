@@ -17,7 +17,6 @@ use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Module;
 use Webovac\Generator\Lib\BaseGenerator;
 use Webovac\Generator\Lib\BuildGenerator\BuildGenerator;
-use Webovac\Generator\Lib\Generator;
 use Webovac\Generator\Lib\ModelGenerator\ModelGenerator;
 use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 use Webovac\Generator\Lib\Writer;

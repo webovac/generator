@@ -10,7 +10,6 @@ use Stepapo\Utils\DI\StepapoExtension;
 use Webovac\Generator\Lib\Analyzer;
 use Webovac\Generator\Lib\PropertyProcessor;
 use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
-use Webovac\Generator\Lib\SetupProvider\SetupProvider;
 
 
 class GeneratorExtension extends StepapoExtension

@@ -4,13 +4,8 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\Lib\ModelGenerator;
 
-use Nette\DI\Attributes\Inject;
-use Nette\PhpGenerator\Attribute;
 use Nette\PhpGenerator\ClassType;
-use Nette\PhpGenerator\PhpFile;
-use Nette\PhpGenerator\PhpNamespace;
 use Nette\PhpGenerator\TraitType;
-use Nette\Utils\Arrays;
 use Nextras\Orm\StorageReflection\StringHelper;
 use Stepapo\Model\Data\DataRepository;
 use Stepapo\Model\Data\Item;
@@ -20,10 +15,7 @@ use Webovac\Core\Model\CmsRepository;
 use Webovac\Generator\Config\Entity;
 use Webovac\Generator\Config\Module;
 use Webovac\Generator\Lib\BaseGenerator;
-use Webovac\Generator\Lib\BuildGenerator\BuildGenerator;
 use Webovac\Generator\Lib\BuildModelGenerator\BuildModelGenerator;
-use Webovac\Generator\Lib\Generator;
-use Webovac\Generator\Lib\ModuleGenerator\ModuleGenerator;
 use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 use Webovac\Generator\Lib\Writer;
 

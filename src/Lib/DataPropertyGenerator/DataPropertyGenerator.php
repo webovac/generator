@@ -2,7 +2,6 @@
 
 namespace Webovac\Generator\Lib\DataPropertyGenerator;
 
-use Build\Model\File\FileData;
 use DateTimeInterface;
 use Nette\InvalidArgumentException;
 use Nette\PhpGenerator\ClassType;
@@ -15,8 +14,6 @@ use Nette\Utils\Arrays;
 use Nextras\Orm\StorageReflection\StringHelper;
 use Stepapo\Model\Definition\Config\Foreign;
 use Stepapo\Model\Definition\Config\Table;
-use Stepapo\Model\Orm\InternalProperty;
-use Stepapo\Model\Orm\PrivateProperty;
 use Stepapo\Utils\Attribute\ArrayOfType;
 use Stepapo\Utils\Attribute\DefaultValue;
 use Stepapo\Utils\Attribute\DontCache;
@@ -24,7 +21,6 @@ use Stepapo\Utils\Attribute\KeyProperty;
 use Stepapo\Utils\Attribute\SkipInManipulation;
 use Stepapo\Utils\Attribute\Type;
 use Stepapo\Utils\Attribute\ValueProperty;
-use Tracy\Dumper;
 use Webovac\Generator\Lib\BuildGenerator\BuildGenerator;
 use Webovac\Generator\Lib\BuildModelGenerator\BuildModelGenerator;
 use Webovac\Generator\Lib\SetupProvider\ISetupProvider;

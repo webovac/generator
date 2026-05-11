@@ -1,5 +1,8 @@
 name: %name%
 namespace: %namespace%
+extends: Webovac\Core\Control\BaseControl
+implements:
+	Webovac\Core\MainModuleControl:
 uses:
 	Webovac\Core\Model\CmsEntity:
 methods:

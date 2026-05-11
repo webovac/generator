@@ -61,6 +61,9 @@ class Writer implements Service
 			if (str_contains($a->getName(), 'Core') xor (str_contains($b->getName(), 'Core'))) {
 				return str_contains($b->getName(), 'Core') <=> str_contains($a->getName(), 'Core');
 			}
+			if (str_contains($a->getName(), 'Style') xor (str_contains($b->getName(), 'Style'))) {
+				return str_contains($b->getName(), 'Style') <=> str_contains($a->getName(), 'Style');
+			}
 			return strcmp($a->getName(), $b->getName());
 		});
 		$class->setTraits($traits);

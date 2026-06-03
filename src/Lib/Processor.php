@@ -91,14 +91,14 @@ class Processor implements \Stepapo\Utils\Service
 		}
 		$this->generator->checkBuild();
 		# CHECK IMPLEMENTS
-		$entities = [];
+//		$entities = [];
 		foreach ($app->modules as $module) {
 			foreach ($module->entities as $entity) {
-				if (array_key_exists($entity->name, $entities)) {
-					continue;
-				}
+//				if (array_key_exists($entity->name, $entities)) {
+//					continue;
+//				}
 				$this->generator->checkBuildModel($entity, $module);
-				$entities[$entity->name] = $entity->name;
+//				$entities[$entity->name] = $entity->name;
 			}
 		}
 	}

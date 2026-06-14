@@ -21,4 +21,5 @@ class Entity extends Config
 	#[ArrayOfType(Implement::class)] public array $repositoryImplements = [];
 	#[ArrayOfType(Override::class)] public array $entityOverrides = [];
 	#[ArrayOfType(Override::class)] public array $repositoryOverrides = [];
+	/** @var Requirement[] */ #[ArrayOfType(Requirement::class)] public array $requirements = [];
 }

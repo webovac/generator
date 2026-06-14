@@ -30,12 +30,13 @@ abstract class BaseGenerator implements Injectable
 	}
 
 
-	protected function updateFile(string $key, string $trait, array $implements = []): void
+	protected function updateFile(string $key, string $trait, array $implements = [], array $requirements = []): void
 	{
 		$this->writer->updateFile(
 			path: $this->setupProvider->getPath($key),
 			trait: $this->setupProvider->getFqn($trait),
 			implements: $implements,
+			requirements: $requirements,
 		);
 	}
 }

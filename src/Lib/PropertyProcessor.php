@@ -7,6 +7,7 @@ namespace Webovac\Generator\Lib;
 use Nette\Utils\Arrays;
 use Stepapo\Model\Definition\Collector;
 use Stepapo\Utils\Printer;
+use Tracy\Dumper;
 
 
 class PropertyProcessor

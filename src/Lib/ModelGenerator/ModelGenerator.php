@@ -78,7 +78,7 @@ class ModelGenerator extends BaseGenerator
 		if (!$this->entity->withTraits) {
 			return;
 		}
-		$this->updateFile(BuildModelGenerator::ENTITY, self::ENTITY_TRAIT, $this->entity->entityImplements);
+		$this->updateFile(BuildModelGenerator::ENTITY, self::ENTITY_TRAIT, $this->entity->entityImplements, $this->entity->requirements);
 		$this->updateFile(BuildModelGenerator::MAPPER, self::MAPPER_TRAIT);
 		$this->updateFile(BuildModelGenerator::REPOSITORY, self::REPOSITORY_TRAIT, $this->entity->repositoryImplements);
 		$this->updateFile(BuildModelGenerator::DATA_OBJECT, self::DATA_OBJECT_TRAIT);

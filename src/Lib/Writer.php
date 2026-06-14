@@ -4,16 +4,23 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\Lib;
 
+use Build\Model\Web\WebData;
 use Nette\InvalidArgumentException;
 use Nette\PhpGenerator\Literal;
+use Nette\PhpGenerator\Method;
+use Nette\PhpGenerator\Parameter;
 use Nette\PhpGenerator\PhpFile;
 use Nette\PhpGenerator\TraitUse;
+use Nette\PhpGenerator\Visibility;
 use Nette\Utils\Arrays;
 use Nette\Utils\FileSystem;
 use Stepapo\FileBuilder\FileBuilder;
 use Stepapo\Utils\Service;
+use Webovac\Cms\Cms;
+use Webovac\Core\Lib\CmsUser;
 use Webovac\Generator\Config\Implement;
 use Webovac\Generator\Config\Override;
+use Webovac\Generator\Config\Requirement;
 
 
 class Writer implements Service
@@ -71,8 +78,11 @@ class Writer implements Service
 	}
 
 
-	/** @param Implement[] $implements */
-	public function updateFile(string $path, string $trait, array $implements = []): void
+	/** 
+	 * @param Implement[] $implements
+	 * @param Requirement[] $requirements
+	 */
+	public function updateFile(string $path, string $trait, array $implements = [], array $requirements = []): void
 	{
 		if (!($content = @file_get_contents($path))) {
 			throw new InvalidArgumentException("File '$path' does not exist.");
@@ -89,6 +99,40 @@ class Writer implements Service
 			}
 			$class->addImplement($implement->class);
 			$namespace->addUse($implement->class);
+		}
+		if ($requirements) {
+			$namespace->addUse(CmsUser::class);
+			$namespace->addUse(WebData::class);
+			if (!$class->hasMethod('checkRequirements')) {
+				$method = (new Method('checkRequirements'))
+					->setBody(<<<PHP
+return match(\$tag) {
+	null => true,
+};
+PHP)
+					->setVisibility(Visibility::Public)
+					->setReturnType('bool');
+				$method->addParameter('user')->setType(CmsUser::class);
+				$method->addParameter('webData')->setType(WebData::class);
+				$method->addParameter('tag')->setType('string')->setNullable()->setDefaultValue(null);
+				$class->addMember($method);
+			}
+			$method = $class->getMethod('checkRequirements');
+			$body = $method->getBody();
+			$add = '';
+			foreach ($requirements as $requirement) {
+				$add .= <<<PHP
+	'$requirement->tag' => \$this->$requirement->method(\$user, \$webData),
+
+PHP;
+			}
+			$add .= <<<PHP
+};
+PHP;
+			$newBody = str_replace(<<<PHP
+};
+PHP, $add, $body);
+			$method->setBody($newBody);
 		}
 		$this->write($path, $file);
 	}

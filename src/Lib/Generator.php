@@ -59,7 +59,7 @@ class Generator implements \Stepapo\Utils\Service
 	}
 
 
-	public function removeBuild()
+	public function removeBuild(): void
 	{
 		$this->buildGenerator->create()->remove();
 	}
@@ -125,7 +125,7 @@ class Generator implements \Stepapo\Utils\Service
 	}
 
 
-	public function removeService(Service $service, ?Module $module = null)
+	public function removeService(Service $service, ?Module $module = null): void
 	{
 		$this->serviceGenerator->create($service, $module)->remove();
 	}
@@ -137,7 +137,7 @@ class Generator implements \Stepapo\Utils\Service
 	}
 
 
-	public function removeCommand(Command $command, ?Module $module = null)
+	public function removeCommand(Command $command, ?Module $module = null): void
 	{
 		$this->commandGenerator->create($command, $module)->remove();
 	}
@@ -155,19 +155,19 @@ class Generator implements \Stepapo\Utils\Service
 	}
 
 
-	public function updateEntityManyHasMany(Table $table, Foreign $from, Foreign $to, bool $isMain = false)
+	public function updateEntityManyHasMany(Table $table, Foreign $from, Foreign $to, bool $isMain = false): void
 	{
 		$this->entityPropertyGenerator->create($from->getPhpTable(), $table)->createManyHasMany($from, $to, $isMain);
 	}
 
 
-	public function updateEntityOneHasMany(Table $table, Foreign $foreign)
+	public function updateEntityOneHasMany(Table $table, Foreign $foreign): void
 	{
 		$this->entityPropertyGenerator->create($foreign->getPhpTable(), $table)->createOneHasMany($foreign);
 	}
 
 
-	public function updateEntitySortProperties(Table $table)
+	public function updateEntitySortProperties(Table $table): void
 	{
 		$this->entityPropertyGenerator->create($table->getPhpName(), $table)->sort();
 	}
@@ -179,19 +179,19 @@ class Generator implements \Stepapo\Utils\Service
 	}
 
 
-	public function updateDataManyHasMany(Table $table, Foreign $from, Foreign $to, bool $isMain = false)
+	public function updateDataManyHasMany(Table $table, Foreign $from, Foreign $to, bool $isMain = false): void
 	{
 		$this->dataPropertyGenerator->create($from->getPhpTable(), $table)->createManyHasMany($from, $to, $isMain);
 	}
 
 
-	public function updateDataOneHasMany(Table $table, Foreign $foreign)
+	public function updateDataOneHasMany(Table $table, Foreign $foreign): void
 	{
 		$this->dataPropertyGenerator->create($foreign->getPhpTable(), $table)->createOneHasMany($foreign);
 	}
 
 
-	public function updateDataSortProperties(Table $table)
+	public function updateDataSortProperties(Table $table): void
 	{
 		$this->dataPropertyGenerator->create($table->getPhpName(), $table)->sort();
 	}

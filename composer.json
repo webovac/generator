@@ -15,10 +15,10 @@
 		"issues": "https://github.com/webovac/generator/issues"
 	},
 	"require": {
-		"php": ">=8.3",
+		"php": ">=8.5",
 		"nette/di": "^3.2",
-        "stepapo/file-builder": "dev-main",
-        "stepapo/model": "dev-main"
+		"stepapo/file-builder": "dev-main",
+		"stepapo/model": "dev-main"
 	},
 	"autoload": {
 		"psr-4": {

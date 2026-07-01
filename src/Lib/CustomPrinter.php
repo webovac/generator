@@ -67,7 +67,7 @@ class CustomPrinter extends Printer
 		$this->namespace = $this->resolveTypes ? $namespace : null;
 		$class->validate();
 		$resolver = $this->namespace
-			? [$namespace, 'simplifyType']
+			? $namespace->simplifyType(...)
 			: fn($s) => $s;
 
 		$traits = [];
@@ -100,32 +100,22 @@ class CustomPrinter extends Printer
 		$readOnlyClass = $class instanceof ClassType && $class->isReadOnly();
 		$consts = [];
 		$methods = [];
-		if (
-			$class instanceof ClassType
-			|| $class instanceof InterfaceType
-			|| $class instanceof TraitType
-			|| $class instanceof EnumType
-		) {
-			foreach ($class->getConstants() as $const) {
-				$consts[] = $this->printConstant($const);
-			}
-
-			foreach ($class->getMethods() as $method) {
-				if ($readOnlyClass && $method->getName() === Method::Constructor) {
-					$method = clone $method;
-					array_map(fn($param) => $param instanceof PromotedParameter ? $param->setReadOnly(false) : null, $method->getParameters());
-				}
-				$methods[] = $this->printMethod($method, $namespace, $class->isInterface());
-			}
+		foreach ($class->getConstants() as $const) {
+			$consts[] = $this->printConstant($const);
 		}
-
+		foreach ($class->getMethods() as $method) {
+			if ($readOnlyClass && $method->getName() === Method::Constructor) {
+				$method = clone $method;
+				array_map(fn($param) => $param instanceof PromotedParameter ? $param->setReadOnly(false) : null, $method->getParameters());
+			}
+			$methods[] = $this->printMethod($method, $namespace, $class->isInterface());
+		}
 		$properties = [];
 		if ($class instanceof ClassType || $class instanceof TraitType || $class instanceof InterfaceType) {
 			foreach ($class->getProperties() as $property) {
 				$properties[] = $this->printProperty($property, $readOnlyClass, $class instanceof InterfaceType);
 			}
 		}
-
 		$members = array_filter([
 			implode('', $traits),
 			$this->joinProperties($consts),
@@ -145,7 +135,7 @@ class CustomPrinter extends Printer
 			$class instanceof ClassType => $class->getName() ? 'class ' . $class->getName() : null,
 			$class instanceof InterfaceType => 'interface ' . $class->getName(),
 			$class instanceof TraitType => 'trait ' . $class->getName(),
-			$class instanceof EnumType => 'enum ' . $class->getName() . ($enumType ? $this->returnTypeColon . $enumType : ''),
+			$class instanceof EnumType => 'enum ' . $class->getName() . ($enumType ? $this->returnTypeColon . $enumType : ''), // @phpstan-ignore instanceof.alwaysTrue
 		};
 		$line[] = ($class instanceof ClassType || $class instanceof InterfaceType) && $class->getExtends()
 			? 'extends ' . implode(', ', array_map($resolver, (array) $class->getExtends()))

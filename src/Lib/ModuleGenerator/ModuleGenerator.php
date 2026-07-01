@@ -44,8 +44,8 @@ class ModuleGenerator extends BaseGenerator
 			module: $this->module,
 		);
 	}
-	
-	
+
+
 	public function generate(): void
 	{
 		if (!$this->module->isPackage) {
@@ -122,7 +122,7 @@ PHP,
 			'injectStartupMethod.name' => "inject{$this->name}Startup",
 			'injectStartupMethod.body' => <<<PHP
 \$this->onStartup[] = function () {
-	
+
 };
 PHP,
 			'createComponentMethod.name' => "createComponent$this->name",
@@ -173,11 +173,12 @@ PHP,
 		]);
 	}
 
-
+	/*
 	private function createMainTemplate(): void
 	{
 		$this->write(self::MAIN_TEMPLATE);
 	}
+	*/
 
 
 	private function createModelTrait(): void
@@ -230,6 +231,7 @@ NEON;
 	private function createManipulationNeon(): void
 	{
 		$path = $this->setupProvider->getPath(self::MANIPULATION_NEON);
+		$neon = '';
 		if ($this->module->type === 'module') {
 			$neon = <<<NEON
 class: Build\Model\Module\ModuleData
@@ -243,7 +245,7 @@ items:
 			en: [title: $this->name, basePath: $this->lname, description: '']
 		pages:
 			$this->name:Home:
-				icon: 
+				icon:
 				translations:
 					cs: [title: $this->name, path: , content: '<h1>$this->name</h1>']
 					en: [title: $this->name, path: , content: '<h1>$this->name</h1>']
@@ -262,13 +264,13 @@ items:
 		color: ''
 		complementaryColor: ''
 		iconBackgroundColor: ''
-		layout: default 
+		layout: default
 		translations:
 			cs: [title: $this->name]
 			en: [title: $this->name]
 		pages:
 			Home:
-				icon: 
+				icon:
 				translations:
 					cs: [title: $this->name, path: , content: '<h1>$this->name</h1>']
 					en: [title: $this->name, path: en, content: '<h1>$this->name</h1>']

@@ -11,7 +11,16 @@ use Webovac\Generator\Lib\Analyzer;
 use Webovac\Generator\Lib\PropertyProcessor;
 use Webovac\Generator\Lib\SetupProvider\ISetupProvider;
 
-
+/**
+ * @property object{
+ *     appDir: string,
+ *     appNamespace: string,
+ *     buildDir: string,
+ *     buildNamespace: string,
+ *     driver: string,
+ *     database: string,
+ * } $config
+ */
 class GeneratorExtension extends StepapoExtension
 {
 	public function getConfigSchema(): Schema

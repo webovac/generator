@@ -9,6 +9,6 @@ use Stepapo\Utils\Config;
 
 class Override extends Config
 {
-	public string $trait;
+	/** @var class-string */ public string $trait;
 	public string $method;
 }

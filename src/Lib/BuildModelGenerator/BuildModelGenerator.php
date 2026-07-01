@@ -78,9 +78,10 @@ class BuildModelGenerator extends BaseGenerator
 	{
 		$this->write(self::ENTITY, [
 			'comments' => [
-				"@property int \$id {primary}",
-				"",
+				'@property int $id {primary}',
+				'',
 				"@method {$this->setupProvider->getName(self::DATA_OBJECT)} getData(bool \$neon = false, bool \$forCache = false)",
+				"@method {$this->setupProvider->getName(self::REPOSITORY)} getRepository()",
 			],
 			'data' => $this->setupProvider->getFqn(self::DATA_OBJECT),
 			'getDataClassMethod.body' => /* language=PHP */ "return {$this->setupProvider->getName(self::DATA_OBJECT)}::class;",
@@ -97,14 +98,14 @@ class BuildModelGenerator extends BaseGenerator
 			'getTableName.returnType' => $schema === $this->setupProvider->getDefaultSchema() ? 'string' : Fqn::class,
 			'getTableName.body' => /* language=PHP */ $schema === $this->setupProvider->getDefaultSchema() ? "return '$lname';" : "return new Fqn('$schema', '$lname');",
 			'getDataClassMethod.body' => <<<PHP
-return new {$this->setupProvider->getName(ModelGenerator::CONVENTIONS)}(
-	\$this->createInflector(),
-	\$this->connection,
-	\$this->getTableName(),
-	\$this->getRepository()->getEntityMetadata(),
-	\$this->cache,
-);
-PHP,
+				return new {$this->setupProvider->getName(ModelGenerator::CONVENTIONS)}(
+					\$this->createInflector(),
+					\$this->connection,
+					\$this->getTableName(),
+					\$this->getRepository()->getEntityMetadata(),
+					\$this->cache,
+				);
+				PHP,
 		]);
 	}
 
@@ -120,7 +121,7 @@ PHP,
 				"@method $this->name create()",
 				"@method $this->name createFromData({$this->setupProvider->getName(self::DATA_OBJECT)} \$data, ?$this->name \$original = null, ?Person \$person = null, ?DateTimeInterface \$date = null, bool \$fromNeon = false, string \$namespace = 'cms')",
 			],
-			'person' => "{$this->setupProvider->getBuildNamespace()}\Model\Person\Person",
+			'person' => "{$this->setupProvider->getBuildNamespace()}\\Model\\Person\\Person",
 			'hidePerson' => $this->name === 'Person',
 			'data' => $this->setupProvider->getFqn(self::DATA_OBJECT),
 			'getEntityClassNamesMethod.body' => /* language=PHP */ "return [$this->name::class];",
@@ -149,16 +150,16 @@ PHP,
 	private function updateDataModel(): void
 	{
 		$path = $this->setupProvider->getPath(BuildGenerator::DATA_MODEL);
-		$file = PhpFile::fromCode(file_get_contents($path));
+		$file = PhpFile::fromCode((string) file_get_contents($path));
 
-		/** @var PhpNamespace $namespace */
 		$namespace = (Arrays::first($file->getNamespaces()));
+		\assert($namespace instanceof PhpNamespace);
 
-		/** @var TraitType|ClassType $class */
 		$class = Arrays::first($file->getClasses());
-		$name = $this->setupProvider->getName(BuildModelGenerator::DATA_REPOSITORY);
+		\assert($class instanceof TraitType || $class instanceof ClassType);
+		$name = $this->setupProvider->getName(self::DATA_REPOSITORY);
 		$propertyName = lcfirst($name);
-		$type = $this->setupProvider->getFqn(BuildModelGenerator::DATA_REPOSITORY);
+		$type = $this->setupProvider->getFqn(self::DATA_REPOSITORY);
 		$property = $class->hasProperty($propertyName)
 			? $class->getProperty($propertyName)
 			: $class->addProperty($propertyName);
@@ -174,19 +175,18 @@ PHP,
 	}
 
 
-
 	private function updateModel(): void
 	{
 		$path = $this->setupProvider->getPath(BuildGenerator::MODEL);
-		$file = PhpFile::fromCode(file_get_contents($path));
+		$file = PhpFile::fromCode((string) file_get_contents($path));
 
-		/** @var PhpNamespace $namespace */
 		$namespace = Arrays::first($file->getNamespaces());
+		\assert($namespace instanceof PhpNamespace);
 
-		/** @var TraitType|ClassType $trait */
+		/** @var TraitType|ClassType $class */
 		$class = Arrays::first($file->getClasses());
-		$name = $this->setupProvider->getName(BuildModelGenerator::REPOSITORY);
-		$type = $this->setupProvider->getFqn($this->entity->withTraits ? BuildModelGenerator::REPOSITORY : ModelGenerator::REPOSITORY_TRAIT);
+		$name = $this->setupProvider->getName(self::REPOSITORY);
+		$type = $this->setupProvider->getFqn($this->entity->withTraits ? self::REPOSITORY : ModelGenerator::REPOSITORY_TRAIT);
 		$lname = lcfirst($name);
 		$comment = "@property-read $name \${$lname}";
 		$comments = explode("\n", $class->getComment() ?: '');

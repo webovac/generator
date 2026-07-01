@@ -28,8 +28,8 @@ class BuildGenerator extends BaseGenerator
 	) {
 		$this->setupProvider = $setupProviderFactory->create();
 	}
-	
-	
+
+
 	public function generate(): void
 	{
 		$this->createBasePresenter();

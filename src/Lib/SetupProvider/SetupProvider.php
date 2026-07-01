@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Webovac\Generator\Lib\SetupProvider;
 
 use Nette\InvalidArgumentException;
@@ -45,8 +47,8 @@ class SetupProvider
 	public function __construct(
 		private ?string $name,
 		private ?Entity $entity,
-		private ?Service $service,
-		private ?Command $command,
+		private ?Service $service, // @phpstan-ignore property.onlyWritten
+		private ?Command $command, // @phpstan-ignore property.onlyWritten
 		private ?Component $component,
 		private ?Module $module,
 		private string $appNamespace,
@@ -83,7 +85,7 @@ class SetupProvider
 			? "$this->appNamespace\Module\\$this->moduleName\Lib"
 			: "$this->appNamespace\Lib";
 
-		$this->traitName = $this->entity?->withTraits && $this->module ? "{$this->module?->name}$this->name" : $this->name;
+		$this->traitName = $this->entity?->withTraits && $this->module ? "{$this->module->name}$this->name" : $this->name;
 		$this->templateName = $this->component?->withTemplateName ? 'default' : $this->lname;
 	}
 

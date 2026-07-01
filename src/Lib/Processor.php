@@ -227,11 +227,12 @@ class Processor implements \Stepapo\Utils\Service
 		$this->printer->printOk();
 	}
 
-
+	/*
 	private function updateEntity(Entity $entity, ?Module $module = null): void
 	{
 		$this->generator->checkBuildModel($entity, $module);
 	}
+	*/
 
 
 	private function createComponent(Component $component, ?Module $module = null): void
@@ -239,7 +240,7 @@ class Processor implements \Stepapo\Utils\Service
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': creating component ');
 		$this->printer->printText($component->name, 'white');
-		$this->generator->createComponent($component, $module ?: 'App');
+		$this->generator->createComponent($component, $module);
 		$this->count++;
 		$this->printer->printOk();
 	}
@@ -267,7 +268,7 @@ class Processor implements \Stepapo\Utils\Service
 	}
 
 
-	private function removeModule(Module $module)
+	private function removeModule(Module $module): void
 	{
 		$this->printer->printText($module->name, 'white');
 		$this->printer->printText(': removing module ');
@@ -277,7 +278,7 @@ class Processor implements \Stepapo\Utils\Service
 	}
 
 
-	private function removeComponent(Component $component, ?Module $module = null)
+	private function removeComponent(Component $component, ?Module $module = null): void
 	{
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing component ');
@@ -288,18 +289,18 @@ class Processor implements \Stepapo\Utils\Service
 	}
 
 
-	private function removeService(Service $service, ?Module $module = null)
-	{
-		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
-		$this->printer->printText(': removing service ');
-		$this->printer->printText($service->name, 'white');
-		$this->generator->removeService($service, $module);
-		$this->count++;
-		$this->printer->printOk();
-	}
+//	private function removeService(Service $service, ?Module $module = null): void
+//	{
+//		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
+//		$this->printer->printText(': removing service ');
+//		$this->printer->printText($service->name, 'white');
+//		$this->generator->removeService($service, $module);
+//		$this->count++;
+//		$this->printer->printOk();
+//	}
 
 
-	private function removeCommand(Command $command, ?Module $module = null)
+	private function removeCommand(Command $command, ?Module $module = null): void
 	{
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing command ');
@@ -310,7 +311,7 @@ class Processor implements \Stepapo\Utils\Service
 	}
 
 
-	private function removeEntity(Entity $entity, ?Module $module = null)
+	private function removeEntity(Entity $entity, ?Module $module = null): void
 	{
 		$this->printer->printText($module ? $module->name : 'ROOT', 'white');
 		$this->printer->printText(': removing entity ');

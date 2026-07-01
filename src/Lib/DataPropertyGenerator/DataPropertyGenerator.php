@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Webovac\Generator\Lib\DataPropertyGenerator;
 
 use DateTimeInterface;
@@ -36,8 +38,8 @@ class DataPropertyGenerator
 
 
 	public function __construct(
-		private Table $table,
 		private string $name,
+		private Table $table,
 		private Writer $writer,
 		ISetupProvider $setupProviderFactory,
 	) {
@@ -123,7 +125,7 @@ class DataPropertyGenerator
 
 	public function createManyHasMany(Foreign $from, Foreign $to, bool $isMain = false): void
 	{
-		$file = PhpFile::fromCode(@file_get_contents($this->path));
+		$file = PhpFile::fromCode((string) @file_get_contents($this->path));
 		/** @var PhpNamespace $namespace */
 		$namespace = Arrays::first($file->getNamespaces());
 		/** @var ClassType $class */
@@ -147,7 +149,7 @@ class DataPropertyGenerator
 
 	public function createOneHasMany(Foreign $foreign): void
 	{
-		$file = PhpFile::fromCode(@file_get_contents($this->path));
+		$file = PhpFile::fromCode((string) @file_get_contents($this->path));
 		/** @var PhpNamespace $namespace */
 		$namespace = Arrays::first($file->getNamespaces());
 		/** @var ClassType $class */
@@ -179,7 +181,7 @@ class DataPropertyGenerator
 
 	public function sort(): void
 	{
-		$file = PhpFile::fromCode(@file_get_contents($this->path));
+		$file = PhpFile::fromCode((string) @file_get_contents($this->path));
 		/** @var ClassType $class */
 		$class = Arrays::first($file->getClasses());
 		$properties = $class->getProperties();

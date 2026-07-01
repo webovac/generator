@@ -55,8 +55,8 @@ class ComponentGenerator extends BaseGenerator
 			module: $this->module,
 		);
 	}
-	
-	
+
+
 	public function generate(): void
 	{
 		$this->createTemplate();
@@ -198,10 +198,10 @@ NEON;
 	}
 
 
-	private function updateMainComponent($mode = Generator::MODE_ADD): void
+	private function updateMainComponent(string $mode = Generator::MODE_ADD): void
 	{
 		$path = $this->setupProvider->getPath(ModuleGenerator::MAIN_COMPONENT);
-		$file = PhpFile::fromCode(file_get_contents($path));
+		$file = PhpFile::fromCode((string) file_get_contents($path));
 		$control = $this->setupProvider->getFqn(self::CONTROL);
 		$factory = $this->setupProvider->getFqn(self::FACTORY);
 

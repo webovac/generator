@@ -25,7 +25,7 @@ class PropertyProcessor
 	}
 
 
-	public function setCommentsBefore($folders): void
+	public function setCommentsBefore(array $folders): void
 	{
 		$definition = $this->collector->getDefinition($folders);
 		foreach ($definition->schemas as $schema) {

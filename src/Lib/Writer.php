@@ -6,9 +6,13 @@ namespace Webovac\Generator\Lib;
 
 use Build\Model\Web\WebData;
 use Nette\InvalidArgumentException;
+use Nette\PhpGenerator\ClassType;
+use Nette\PhpGenerator\EnumType;
+use Nette\PhpGenerator\InterfaceType;
 use Nette\PhpGenerator\Literal;
 use Nette\PhpGenerator\Method;
 use Nette\PhpGenerator\PhpFile;
+use Nette\PhpGenerator\TraitType;
 use Nette\PhpGenerator\TraitUse;
 use Nette\PhpGenerator\Visibility;
 use Nette\Utils\Arrays;
@@ -61,8 +65,11 @@ class Writer implements Service
 		}
 		$file = PhpFile::fromCode($content);
 		$class = Arrays::first($file->getClasses());
+		if (!$class instanceof ClassType) {
+			return;
+		}
 		$traits = $class->getTraits();
-		uasort($traits, function (TraitUse $a, TraitUse $b) {
+		usort($traits, function (TraitUse $a, TraitUse $b) {
 			if (str_contains($a->getName(), 'Core') xor (str_contains($b->getName(), 'Core'))) {
 				return str_contains($b->getName(), 'Core') <=> str_contains($a->getName(), 'Core');
 			}
@@ -76,7 +83,7 @@ class Writer implements Service
 	}
 
 
-	/** 
+	/**
 	 * @param Implement[] $implements
 	 * @param Requirement[] $requirements
 	 */
@@ -88,6 +95,9 @@ class Writer implements Service
 		$file = PhpFile::fromCode($content);
 		$class = Arrays::first($file->getClasses());
 		$namespace = Arrays::first($file->getNamespaces());
+		if (!$class instanceof ClassType) {
+			return;
+		}
 		$class->addTrait($trait);
 		$namespace->addUse($trait);
 		$alreadyImplements = $class->getImplements();
@@ -144,6 +154,9 @@ PHP, $add, $body);
 		}
 		$file = PhpFile::fromCode($content);
 		$class = Arrays::first($file->getClasses());
+		if (!$class instanceof ClassType) {
+			return;
+		}
 		$namespace = Arrays::first($file->getNamespaces());
 		$alreadyImplements = $class->getImplements();
 		foreach ($implements as $implement) {
@@ -169,6 +182,9 @@ PHP, $add, $body);
 		}
 		$file = PhpFile::fromCode($content);
 		$class = Arrays::first($file->getClasses());
+		if (!$class instanceof ClassType) {
+			return;
+		}
 		$traits = $class->getTraits();
 		foreach ($overrides as $override) {
 			$trait = $traits[$override->trait];
@@ -200,11 +216,5 @@ PHP, $add, $body);
 				}
 			}
 		}
-	}
-
-
-	private function fixProperties(PhpFile $file): void
-	{
-
 	}
 }

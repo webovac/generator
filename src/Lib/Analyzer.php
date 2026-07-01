@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Webovac\Generator\Lib;
 
+use Nette\PhpGenerator\ClassType;
 use Nette\PhpGenerator\PhpFile;
 use Nette\Utils\Arrays;
 use Nette\Utils\Finder;
@@ -86,8 +87,9 @@ class Analyzer implements \Stepapo\Utils\Service
 			}
 		}
 		if (file_exists($path = $this->buildDir . '/Presenter/BasePresenter.php')) {
-			$file = PhpFile::fromCode(file_get_contents($path));
+			$file = PhpFile::fromCode((string) file_get_contents($path));
 			$class = Arrays::first($file->getClasses());
+			assert($class instanceof ClassType);
 			foreach ($class->getTraits() as $trait) {
 				preg_match('/^(.+)\\\(.+)\\\Presenter\\\(.+)Presenter$/', $trait->getName(), $m);
 				$namespace = $m[1] ?? null;
@@ -98,8 +100,9 @@ class Analyzer implements \Stepapo\Utils\Service
 					$module->namespace = $m[1];
 					$module->isPackage = true;
 					foreach (Finder::findFiles('*Mapper.php')->from($this->buildDir . '/Model') as $repositoryFile) {
-						$f = PhpFile::fromCode(file_get_contents($repositoryFile->getPathname()));
+						$f = PhpFile::fromCode((string) file_get_contents($repositoryFile->getPathname()));
 						$c = Arrays::first($f->getClasses());
+						assert($c instanceof ClassType);
 						foreach ($c->getTraits() as $t) {
 							$n = Arrays::last(explode('\\', $t->getName()));
 							preg_match("/^$module->name(.+)Mapper$/", $n, $m);

@@ -34,8 +34,9 @@ class Collector implements Service
 	 */
 	private function mergeApps(array $apps): App
 	{
+		$mergedApp = null;
 		foreach ($apps as $app) {
-			if (!isset($mergedApp)) {
+			if (!$mergedApp) {
 				$mergedApp = $app;
 				continue;
 			}

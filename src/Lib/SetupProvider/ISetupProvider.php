@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Webovac\Generator\Lib\SetupProvider;
 
 use Stepapo\Utils\Factory;

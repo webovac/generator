@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Webovac\Generator\Lib\EntityPropertyGenerator;
 
 use Nette\InvalidArgumentException;
@@ -30,8 +32,8 @@ class EntityPropertyGenerator
 
 
 	public function __construct(
-		private Table $table,
 		private string $name,
+		private Table $table,
 		private Writer $writer,
 		ISetupProvider $setupProviderFactory,
 	) {
@@ -94,14 +96,14 @@ class EntityPropertyGenerator
 					$namespace->addUse($use);
 				}
 			}
-			if ($column->private) {
-				$namespace->addUse(PrivateProperty::class);
-			}
-			if ($column->internal) {
-				$namespace->addUse(InternalProperty::class);
-			}
+//			if ($column->private) {
+//				$namespace->addUse(PrivateProperty::class);
+//			}
+//			if ($column->internal) {
+//				$namespace->addUse(InternalProperty::class);
+//			}
 			$comment = implode(' ', $c);
-			if (!in_array($c, $comments, true)) {
+			if (!in_array($c, $comments, true)) { // @phpstan-ignore function.impossibleType
 				$comments[] = $comment;
 			}
 		}
@@ -112,7 +114,7 @@ class EntityPropertyGenerator
 
 	public function createManyHasMany(Foreign $from, Foreign $to, bool $isMain = false): void
 	{
-		$file = PhpFile::fromCode(@file_get_contents($this->path));
+		$file = PhpFile::fromCode((string) @file_get_contents($this->path));
 		/** @var PhpNamespace $namespace */
 		$namespace = Arrays::first($file->getNamespaces());
 		/** @var ClassType $class */
@@ -139,7 +141,7 @@ class EntityPropertyGenerator
 
 	public function createOneHasMany(Foreign $foreign): void
 	{
-		$file = PhpFile::fromCode(@file_get_contents($this->path));
+		$file = PhpFile::fromCode((string) @file_get_contents($this->path));
 		/** @var PhpNamespace $namespace */
 		$namespace = Arrays::first($file->getNamespaces());
 		/** @var ClassType $class */
@@ -170,7 +172,7 @@ class EntityPropertyGenerator
 
 	public function sort(): void
 	{
-		$file = PhpFile::fromCode(@file_get_contents($this->path));
+		$file = PhpFile::fromCode((string) @file_get_contents($this->path));
 		/** @var ClassType $class */
 		$class = Arrays::first($file->getClasses());
 		$comments = explode("\n", $class->getComment() ?: '');

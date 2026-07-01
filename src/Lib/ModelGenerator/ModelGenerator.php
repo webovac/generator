@@ -47,8 +47,8 @@ class ModelGenerator extends BaseGenerator
 			module: $this->module,
 		);
 	}
-	
-	
+
+
 	public function generate(): void
 	{
 		if ($this->module?->isPackage) {
@@ -93,25 +93,21 @@ class ModelGenerator extends BaseGenerator
 		if (!$this->entity->withTraits) {
 			return;
 		}
-		$entityKey = $this->module && !$this->entity->withTraits ? self::ENTITY_TRAIT : BuildModelGenerator::ENTITY;
-		$repositoryKey = $this->module && !$this->entity->withTraits ? self::REPOSITORY_TRAIT : BuildModelGenerator::REPOSITORY;
-		$this->writer->checkFileImplements($this->setupProvider->getPath($entityKey), $this->entity->entityImplements);
-		$this->writer->checkFileImplements($this->setupProvider->getPath($repositoryKey), $this->entity->repositoryImplements);
-		$this->writer->checkFileOverrides($this->setupProvider->getPath($entityKey), $this->setupProvider->getName(self::ENTITY_TRAIT), $this->entity->entityOverrides);
-		$this->writer->checkFileOverrides($this->setupProvider->getPath($repositoryKey), $this->setupProvider->getName(self::REPOSITORY_TRAIT), $this->entity->repositoryOverrides);
-		if ($this->entity->withTraits) {
-			$paths = [
-				$this->setupProvider->getPath(BuildModelGenerator::ENTITY),
-				$this->setupProvider->getPath(BuildModelGenerator::DATA_OBJECT),
-				$this->setupProvider->getPath(BuildModelGenerator::MAPPER),
-				$this->setupProvider->getPath(BuildModelGenerator::REPOSITORY),
-			];
-			if ($this->entity->withDataRepository) {
-				$paths[] = $this->setupProvider->getPath(BuildModelGenerator::DATA_REPOSITORY);
-			}
-			foreach ($paths as $path) {
-				$this->writer->sortTraits($path);
-			}
+		$this->writer->checkFileImplements($this->setupProvider->getPath(BuildModelGenerator::ENTITY), $this->entity->entityImplements);
+		$this->writer->checkFileImplements($this->setupProvider->getPath(BuildModelGenerator::REPOSITORY), $this->entity->repositoryImplements);
+		$this->writer->checkFileOverrides($this->setupProvider->getPath(BuildModelGenerator::ENTITY), $this->setupProvider->getName(self::ENTITY_TRAIT), $this->entity->entityOverrides);
+		$this->writer->checkFileOverrides($this->setupProvider->getPath(BuildModelGenerator::REPOSITORY), $this->setupProvider->getName(self::REPOSITORY_TRAIT), $this->entity->repositoryOverrides);
+		$paths = [
+			$this->setupProvider->getPath(BuildModelGenerator::ENTITY),
+			$this->setupProvider->getPath(BuildModelGenerator::DATA_OBJECT),
+			$this->setupProvider->getPath(BuildModelGenerator::MAPPER),
+			$this->setupProvider->getPath(BuildModelGenerator::REPOSITORY),
+		];
+		if ($this->entity->withDataRepository) {
+			$paths[] = $this->setupProvider->getPath(BuildModelGenerator::DATA_REPOSITORY);
+		}
+		foreach ($paths as $path) {
+			$this->writer->sortTraits($path);
 		}
 	}
 
@@ -122,10 +118,10 @@ class ModelGenerator extends BaseGenerator
 			'getDefaultMappingsMethod.body' => <<<PHP
 return [
 	[
-	
+
 	],
 	[
-	
+
 	],
 	[]
 ];
